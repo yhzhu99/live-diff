@@ -183,12 +183,12 @@ export default function App() {
   // Create stable file objects
   const oldFile: FileContents = useMemo(() => ({
     name: `original.${getExtension(detectedLanguage)}`,
-    contents: originalContent,
+    contents: originalContent ? (originalContent.endsWith('\n') ? originalContent : originalContent + '\n') : '',
   }), [originalContent, detectedLanguage])
 
   const newFile: FileContents = useMemo(() => ({
     name: `modified.${getExtension(detectedLanguage)}`,
-    contents: modifiedContent,
+    contents: modifiedContent ? (modifiedContent.endsWith('\n') ? modifiedContent : modifiedContent + '\n') : '',
   }), [modifiedContent, detectedLanguage])
 
   // Handle swap
