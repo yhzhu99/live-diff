@@ -26,6 +26,7 @@ const LANGUAGES = [
   { value: 'json', label: 'JSON' },
   { value: 'yaml', label: 'YAML' },
   { value: 'markdown', label: 'Markdown' },
+  { value: 'tex', label: 'TeX/LaTeX' },
   { value: 'sql', label: 'SQL' },
   { value: 'shell', label: 'Shell' },
   { value: 'dockerfile', label: 'Dockerfile' },
@@ -143,7 +144,8 @@ export default function App() {
     }
 
     try {
-      const result = hljs.highlightAuto(contentToDetect)
+      const languageSubset = LANGUAGES.map(l => l.value).filter(v => v !== 'plaintext')
+      const result = hljs.highlightAuto(contentToDetect, languageSubset)
       const detected = result.language || 'plaintext'
       setDetectedLanguage(detected)
     } catch (e) {
@@ -172,6 +174,7 @@ export default function App() {
       json: 'json',
       yaml: 'yaml',
       markdown: 'md',
+      tex: 'tex',
       sql: 'sql',
       shell: 'sh',
       dockerfile: 'dockerfile',
