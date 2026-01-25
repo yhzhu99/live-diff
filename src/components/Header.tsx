@@ -1,34 +1,126 @@
 interface HeaderProps {
   darkMode: boolean
   onToggleDarkMode: () => void
+  // Language controls
+  language: string
+  detectedLanguage: string
+  languages: { value: string; label: string }[]
+  onLanguageChange: (lang: string) => void
+  // View controls
+  diffStyle: 'split' | 'unified'
+  onDiffStyleChange: (style: 'split' | 'unified') => void
+  // Settings
+  onOpenSettings: () => void
 }
 
-export function Header({ darkMode, onToggleDarkMode }: HeaderProps) {
+export function Header({
+  darkMode,
+  onToggleDarkMode,
+  language,
+  detectedLanguage,
+  languages,
+  onLanguageChange,
+  diffStyle,
+  onDiffStyleChange,
+  onOpenSettings,
+}: HeaderProps) {
+  const allLanguages = [{ value: 'auto', label: 'Auto ✨' }, ...languages]
+  const detectedLabel = languages.find(l => l.value === detectedLanguage)?.label || detectedLanguage
+
   return (
-    <header className="flex items-center justify-between px-6 py-4 border-b border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-900">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-lg shadow-primary-500/25">
-          <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <header className="flex items-center justify-between px-4 py-2.5 border-b border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-900">
+      {/* Logo */}
+      <div className="flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-md shadow-primary-500/20">
+          <svg className="w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
           </svg>
         </div>
-        <div>
-          <h1 className="text-xl font-bold text-surface-900 dark:text-white">
-            Live Diff
-          </h1>
-          <p className="text-xs text-surface-500 dark:text-surface-400">
-            Real-time content comparison
-          </p>
+        <h1 className="text-lg font-bold text-surface-900 dark:text-white">
+          Live Diff
+        </h1>
+      </div>
+
+      {/* Center Controls */}
+      <div className="flex items-center gap-4">
+        {/* Language Selector */}
+        <div className="flex items-center gap-2">
+          <label className="text-xs font-medium text-surface-500 dark:text-surface-400">
+            Language
+          </label>
+          <div className="relative">
+            <select
+              className="px-2.5 py-1.5 text-sm rounded-lg bg-surface-100 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 text-surface-700 dark:text-surface-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent cursor-pointer min-w-[120px]"
+              value={language}
+              onChange={(e) => onLanguageChange(e.target.value)}
+            >
+              {allLanguages.map((lang) => (
+                <option key={lang.value} value={lang.value}>
+                  {lang.label}
+                </option>
+              ))}
+            </select>
+            {language === 'auto' && detectedLanguage !== 'plaintext' && (
+              <span className="absolute -bottom-4 left-0 text-[10px] text-primary-500 whitespace-nowrap">
+                → {detectedLabel}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="w-px h-6 bg-surface-200 dark:bg-surface-700" />
+
+        {/* View Toggle */}
+        <div className="flex items-center gap-2">
+          <label className="text-xs font-medium text-surface-500 dark:text-surface-400">
+            View
+          </label>
+          <div className="inline-flex rounded-lg overflow-hidden border border-surface-200 dark:border-surface-700">
+            <button
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                diffStyle === 'split'
+                  ? 'bg-primary-600 text-white'
+                  : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800'
+              }`}
+              onClick={() => onDiffStyleChange('split')}
+            >
+              Split
+            </button>
+            <button
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                diffStyle === 'unified'
+                  ? 'bg-primary-600 text-white'
+                  : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800'
+              }`}
+              onClick={() => onDiffStyleChange('unified')}
+            >
+              Unified
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      {/* Right Controls */}
+      <div className="flex items-center gap-2">
+        {/* Settings */}
+        <button
+          onClick={onOpenSettings}
+          className="p-2 rounded-lg text-surface-500 hover:text-surface-700 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+          title="Diff Settings"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
+
         {/* GitHub link */}
         <a
           href="https://github.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="btn-ghost btn-icon text-surface-500 hover:text-surface-700 dark:hover:text-surface-300"
+          className="p-2 rounded-lg text-surface-500 hover:text-surface-700 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
           title="View on GitHub"
         >
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -39,7 +131,7 @@ export function Header({ darkMode, onToggleDarkMode }: HeaderProps) {
         {/* Dark mode toggle */}
         <button
           onClick={onToggleDarkMode}
-          className="btn-ghost btn-icon"
+          className="p-2 rounded-lg text-surface-500 hover:text-surface-700 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
           title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
         >
           {darkMode ? (
@@ -47,7 +139,7 @@ export function Header({ darkMode, onToggleDarkMode }: HeaderProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
           ) : (
-            <svg className="w-5 h-5 text-surface-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
             </svg>
           )}

@@ -74,30 +74,30 @@ export function Editor({ title, placeholder, value, onChange, darkMode }: Editor
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <div className="panel-header">
-        <h2 className="panel-title flex items-center gap-2">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="panel-header py-2 px-3">
+        <h2 className="panel-title flex items-center gap-1.5 text-xs">
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
           </svg>
           {title}
         </h2>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           <button
             onClick={handlePaste}
-            className="btn-ghost btn-icon"
+            className="p-1.5 rounded text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
             title="Paste from clipboard"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           </button>
           {value && (
             <button
               onClick={handleClear}
-              className="btn-ghost btn-icon text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+              className="p-1.5 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
               title="Clear content"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
@@ -143,8 +143,8 @@ export function Editor({ title, placeholder, value, onChange, darkMode }: Editor
       </div>
 
       {/* Character count */}
-      <div className="px-4 py-2 text-xs text-surface-400 dark:text-surface-500 border-t border-surface-200 dark:border-surface-700">
-        {value.length} characters • {value.split('\n').length} lines
+      <div className="px-3 py-1.5 text-[10px] text-surface-400 dark:text-surface-500 border-t border-surface-200 dark:border-surface-700">
+        {value.length} chars • {value.split('\n').length} lines
       </div>
     </div>
   )
