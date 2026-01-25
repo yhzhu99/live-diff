@@ -2,7 +2,6 @@ import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { MultiFileDiff, type FileContents } from '@pierre/diffs/react'
 import hljs from 'highlight.js'
 import { Editor } from './components/Editor'
-import { Toolbar } from './components/Toolbar'
 import { Header } from './components/Header'
 import { SettingsModal } from './components/SettingsModal'
 
@@ -34,44 +33,101 @@ const LANGUAGES = [
 
 type DiffStyle = 'split' | 'unified'
 
-// LocalStorage key for dark mode
-const DARK_MODE_KEY = 'live-diff-dark-mode'
+// LocalStorage keys
+const STORAGE_KEYS = {
+  DARK_MODE: 'live-diff-dark-mode',
+  DIFF_STYLE: 'live-diff-diff-style',
+  LINE_DIFF_TYPE: 'live-diff-line-diff-type',
+  SHOW_BACKGROUNDS: 'live-diff-show-backgrounds',
+  WRAP_TEXT: 'live-diff-wrap-text',
+  SHOW_LINE_NUMBERS: 'live-diff-show-line-numbers',
+  EDITOR_HEIGHT: 'live-diff-editor-height',
+}
+
+// Constraints for editor height
+const MIN_EDITOR_HEIGHT = 120
+const MAX_EDITOR_HEIGHT_RATIO = 0.5 // Max 50% of viewport
 
 export default function App() {
   const [originalContent, setOriginalContent] = useState('')
   const [modifiedContent, setModifiedContent] = useState('')
   const [language, setLanguage] = useState('auto')
   const [detectedLanguage, setDetectedLanguage] = useState('plaintext')
-  const [diffStyle, setDiffStyle] = useState<DiffStyle>('split')
 
-  // Initialize darkMode from localStorage, default to false (light mode)
+  // Initialize settings from localStorage
+  const [diffStyle, setDiffStyle] = useState<DiffStyle>(() => {
+    const stored = localStorage.getItem(STORAGE_KEYS.DIFF_STYLE)
+    return (stored === 'unified' ? 'unified' : 'split') as DiffStyle
+  })
+
   const [darkMode, setDarkMode] = useState(() => {
-    const stored = localStorage.getItem(DARK_MODE_KEY)
-    if (stored !== null) {
-      return stored === 'true'
-    }
-    return false // Default to light mode
+    const stored = localStorage.getItem(STORAGE_KEYS.DARK_MODE)
+    return stored === 'true'
   })
 
   // Settings Modal
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
-  // Advanced Options
-  const [lineDiffType, setLineDiffType] = useState<'word-alt' | 'word' | 'char' | 'none'>('word-alt')
-  const [showBackgrounds, setShowBackgrounds] = useState(true)
-  const [wrapText, setWrapText] = useState(true)
-  const [showLineNumbers, setShowLineNumbers] = useState(true)
+  // Advanced Options - all persisted
+  const [lineDiffType, setLineDiffType] = useState<'word-alt' | 'word' | 'char' | 'none'>(() => {
+    const stored = localStorage.getItem(STORAGE_KEYS.LINE_DIFF_TYPE)
+    return (['word-alt', 'word', 'char', 'none'].includes(stored || '') ? stored : 'word-alt') as 'word-alt' | 'word' | 'char' | 'none'
+  })
+
+  const [showBackgrounds, setShowBackgrounds] = useState(() => {
+    const stored = localStorage.getItem(STORAGE_KEYS.SHOW_BACKGROUNDS)
+    return stored !== 'false' // Default true
+  })
+
+  const [wrapText, setWrapText] = useState(() => {
+    const stored = localStorage.getItem(STORAGE_KEYS.WRAP_TEXT)
+    return stored !== 'false' // Default true
+  })
+
+  const [showLineNumbers, setShowLineNumbers] = useState(() => {
+    const stored = localStorage.getItem(STORAGE_KEYS.SHOW_LINE_NUMBERS)
+    return stored !== 'false' // Default true
+  })
 
   // Layout states
-  const [editorHeight, setEditorHeight] = useState(280)
+  const [editorHeight, setEditorHeight] = useState(() => {
+    const stored = localStorage.getItem(STORAGE_KEYS.EDITOR_HEIGHT)
+    const parsed = parseInt(stored || '', 10)
+    return !isNaN(parsed) && parsed >= MIN_EDITOR_HEIGHT ? parsed : 250
+  })
+
   const [isFullscreen, setIsFullscreen] = useState(false)
   const isResizing = useRef(false)
 
-  // Sync dark mode with document and localStorage
+  // Persist all settings to localStorage
   useEffect(() => {
     document.body.classList.toggle('dark', darkMode)
-    localStorage.setItem(DARK_MODE_KEY, String(darkMode))
+    localStorage.setItem(STORAGE_KEYS.DARK_MODE, String(darkMode))
   }, [darkMode])
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.DIFF_STYLE, diffStyle)
+  }, [diffStyle])
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.LINE_DIFF_TYPE, lineDiffType)
+  }, [lineDiffType])
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.SHOW_BACKGROUNDS, String(showBackgrounds))
+  }, [showBackgrounds])
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.WRAP_TEXT, String(wrapText))
+  }, [wrapText])
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.SHOW_LINE_NUMBERS, String(showLineNumbers))
+  }, [showLineNumbers])
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.EDITOR_HEIGHT, String(editorHeight))
+  }, [editorHeight])
 
   // Auto detection effect
   useEffect(() => {
@@ -152,7 +208,7 @@ export default function App() {
     setDarkMode(prev => !prev)
   }, [])
 
-  // Resizing logic
+  // Resizing logic with proper constraints
   const startResizing = useCallback(() => {
     isResizing.current = true
     document.body.style.cursor = 'row-resize'
@@ -167,10 +223,21 @@ export default function App() {
 
   const handleResize = useCallback((e: MouseEvent) => {
     if (!isResizing.current) return
-    // Adjust editor height based on mouse position (header is ~60px)
-    const newHeight = e.clientY - 100
-    if (newHeight > 120 && newHeight < window.innerHeight - 200) {
+
+    // Calculate max height based on viewport
+    const maxHeight = Math.floor(window.innerHeight * MAX_EDITOR_HEIGHT_RATIO)
+
+    // Header is ~52px, main padding is ~12px
+    const headerOffset = 64
+    const newHeight = e.clientY - headerOffset
+
+    // Apply constraints
+    if (newHeight >= MIN_EDITOR_HEIGHT && newHeight <= maxHeight) {
       setEditorHeight(newHeight)
+    } else if (newHeight < MIN_EDITOR_HEIGHT) {
+      setEditorHeight(MIN_EDITOR_HEIGHT)
+    } else if (newHeight > maxHeight) {
+      setEditorHeight(maxHeight)
     }
   }, [])
 
@@ -197,17 +264,16 @@ export default function App() {
         onLanguageChange={setLanguage}
         diffStyle={diffStyle}
         onDiffStyleChange={setDiffStyle}
+        onSwap={handleSwap}
+        onClear={handleClear}
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
       <main className="flex-1 flex flex-col p-3 gap-3 max-w-[1800px] mx-auto w-full">
-        {/* Action Bar */}
-        <Toolbar onSwap={handleSwap} onClear={handleClear} />
-
         {/* Editor Section */}
         <div
           className="grid grid-cols-1 lg:grid-cols-2 gap-3 flex-none"
-          style={{ height: `${editorHeight}px` }}
+          style={{ height: `${editorHeight}px`, minHeight: `${MIN_EDITOR_HEIGHT}px` }}
         >
           <Editor
             title="Original"
