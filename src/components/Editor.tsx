@@ -144,7 +144,7 @@ export function Editor({ title, placeholder, value, onChange, darkMode }: Editor
 
       {/* Character count */}
       <div className="px-3 py-1.5 text-[10px] text-surface-400 dark:text-surface-500 border-t border-surface-200 dark:border-surface-700">
-        {value.length} chars • {value.split('\n').length} lines
+        {value.trim().split(/\s+/).filter(Boolean).length} words • {value.length} chars • {value.split('\n').length} lines
       </div>
     </div>
   )

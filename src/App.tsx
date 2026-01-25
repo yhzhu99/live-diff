@@ -255,6 +255,12 @@ export default function App() {
     }
   }, [handleResize, stopResizing])
 
+  // Word count statistics
+  const getWordCount = (text: string) => text.trim().split(/\s+/).filter(Boolean).length
+  const originalWordCount = getWordCount(originalContent)
+  const modifiedWordCount = getWordCount(modifiedContent)
+  const wordDiff = modifiedWordCount - originalWordCount
+
   // Check if there's content to diff
   const hasDiff = originalContent.length > 0 || modifiedContent.length > 0
 
@@ -315,7 +321,17 @@ export default function App() {
               </svg>
               Diff Preview
             </h2>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              {hasDiff && (
+                <div className="flex items-center gap-2 px-2 py-0.5 rounded-full bg-surface-100 dark:bg-surface-800 border border-surface-200 dark:border-surface-700">
+                  <span className="text-[10px] font-medium text-surface-600 dark:text-surface-400">
+                    {originalWordCount} → {modifiedWordCount} words
+                  </span>
+                  <span className={`text-[10px] font-bold ${wordDiff > 0 ? 'text-green-500' : wordDiff < 0 ? 'text-red-500' : 'text-surface-400'}`}>
+                    ({wordDiff > 0 ? '+' : ''}{wordDiff})
+                  </span>
+                </div>
+              )}
               {hasDiff && (
                 <span className="text-[10px] text-surface-500 dark:text-surface-400">
                   {diffStyle === 'split' ? 'Split' : 'Unified'}
