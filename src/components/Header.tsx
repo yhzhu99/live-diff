@@ -66,9 +66,11 @@ export function Header({
               ))}
             </select>
             {language === 'auto' && detectedLanguage !== 'plaintext' && (
-              <span className="absolute -bottom-4 left-0 text-[10px] text-primary-500 whitespace-nowrap">
-                → {detectedLabel}
-              </span>
+              <div className="absolute top-1/2 -translate-y-1/2 right-8 flex items-center pointer-events-none">
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20 whitespace-nowrap animate-fade-in">
+                  {detectedLabel}
+                </span>
+              </div>
             )}
           </div>
         </div>

@@ -227,9 +227,14 @@ export default function App() {
     // Calculate max height based on viewport
     const maxHeight = Math.floor(window.innerHeight * MAX_EDITOR_HEIGHT_RATIO)
 
-    // Header is ~52px, main padding is ~12px
-    const headerOffset = 64
-    const newHeight = e.clientY - headerOffset
+    // Header + padding + gaps
+    const headerHeight = 52
+    const containerPadding = 12
+    const gap = 12
+    const resizeHandleHeight = 12
+
+    // Calculate new height from mouse position
+    const newHeight = e.clientY - headerHeight - containerPadding
 
     // Apply constraints
     if (newHeight >= MIN_EDITOR_HEIGHT && newHeight <= maxHeight) {
@@ -293,7 +298,12 @@ export default function App() {
 
         {/* Resize Handle */}
         {!isFullscreen && (
-          <div className="resize-handle" onMouseDown={startResizing} />
+          <div className="flex-none -my-1.5 py-1.5 z-20">
+            <div
+              className="resize-handle"
+              onMouseDown={startResizing}
+            />
+          </div>
         )}
 
         {/* Diff Preview Section */}
