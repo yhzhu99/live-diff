@@ -234,11 +234,9 @@ export default function App() {
     // Calculate max height based on viewport
     const maxHeight = Math.floor(window.innerHeight * MAX_EDITOR_HEIGHT_RATIO)
 
-    // Header + padding + gaps
+    // Header + padding
     const headerHeight = 52
     const containerPadding = 12
-    const gap = 12
-    const resizeHandleHeight = 12
 
     // Calculate new height from mouse position
     const newHeight = e.clientY - headerHeight - containerPadding
