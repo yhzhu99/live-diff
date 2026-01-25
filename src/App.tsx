@@ -404,14 +404,7 @@ export default function App() {
       )}
 
       {/* Footer */}
-      {!isFullscreen && (
-        <footer className="text-center py-2 text-xs text-surface-500 dark:text-surface-500 border-t border-surface-200 dark:border-surface-800">
-          Built with{' '}
-          <a href="https://diffs.com" target="_blank" rel="noopener noreferrer" className="text-primary-500 hover:underline">
-            @pierre/diffs
-          </a>
-        </footer>
-      )}
+
 
       {/* Settings Modal */}
       <SettingsModal
