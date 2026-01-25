@@ -26,7 +26,7 @@ const LANGUAGES = [
   { value: 'json', label: 'JSON' },
   { value: 'yaml', label: 'YAML' },
   { value: 'markdown', label: 'Markdown' },
-  { value: 'tex', label: 'TeX/LaTeX' },
+  { value: 'latex', label: 'TeX/LaTeX' },
   { value: 'sql', label: 'SQL' },
   { value: 'shell', label: 'Shell' },
   { value: 'dockerfile', label: 'Dockerfile' },
@@ -137,20 +137,24 @@ export default function App() {
       return
     }
 
-    const contentToDetect = modifiedContent || originalContent
-    if (!contentToDetect) {
-      setDetectedLanguage('plaintext')
-      return
-    }
+    const timer = setTimeout(() => {
+      const contentToDetect = `${originalContent}\n${modifiedContent}`.trim()
+      if (!contentToDetect) {
+        setDetectedLanguage('plaintext')
+        return
+      }
 
-    try {
-      const languageSubset = LANGUAGES.map(l => l.value).filter(v => v !== 'plaintext')
-      const result = hljs.highlightAuto(contentToDetect, languageSubset)
-      const detected = result.language || 'plaintext'
-      setDetectedLanguage(detected)
-    } catch (e) {
-      setDetectedLanguage('plaintext')
-    }
+      try {
+        const languageSubset = LANGUAGES.map(l => l.value).filter(v => v !== 'plaintext')
+        const result = hljs.highlightAuto(contentToDetect, languageSubset)
+        const detected = result.language || 'plaintext'
+        setDetectedLanguage(detected)
+      } catch (e) {
+        setDetectedLanguage('plaintext')
+      }
+    }, 200)
+
+    return () => clearTimeout(timer)
   }, [language, originalContent, modifiedContent])
 
   // Get file extension from language
@@ -174,7 +178,7 @@ export default function App() {
       json: 'json',
       yaml: 'yaml',
       markdown: 'md',
-      tex: 'tex',
+      latex: 'tex',
       sql: 'sql',
       shell: 'sh',
       dockerfile: 'dockerfile',
