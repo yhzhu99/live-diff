@@ -1,5 +1,6 @@
 interface ToolbarProps {
   language: string
+  detectedLanguage: string
   languages: { value: string; label: string }[]
   onLanguageChange: (lang: string) => void
   diffStyle: 'split' | 'unified'
@@ -10,6 +11,7 @@ interface ToolbarProps {
 
 export function Toolbar({
   language,
+  detectedLanguage,
   languages,
   onLanguageChange,
   diffStyle,
@@ -17,6 +19,11 @@ export function Toolbar({
   onSwap,
   onClear,
 }: ToolbarProps) {
+  const allLanguages = [{ value: 'auto', label: 'Auto Detect ✨' }, ...languages]
+
+  // Find the label for detected language
+  const detectedLabel = languages.find(l => l.value === detectedLanguage)?.label || detectedLanguage
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-white dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 shadow-sm">
       <div className="flex items-center gap-3">
@@ -25,17 +32,24 @@ export function Toolbar({
           <label className="text-sm font-medium text-surface-600 dark:text-surface-400">
             Language:
           </label>
-          <select
-            className="select"
-            value={language}
-            onChange={(e) => onLanguageChange(e.target.value)}
-          >
-            {languages.map((lang) => (
-              <option key={lang.value} value={lang.value}>
-                {lang.label}
-              </option>
-            ))}
-          </select>
+          <div className="flex flex-col">
+            <select
+              className="select"
+              value={language}
+              onChange={(e) => onLanguageChange(e.target.value)}
+            >
+              {allLanguages.map((lang) => (
+                <option key={lang.value} value={lang.value}>
+                  {lang.label}
+                </option>
+              ))}
+            </select>
+            {language === 'auto' && detectedLanguage !== 'plaintext' && (
+              <span className="text-[10px] text-primary-500 mt-0.5 ml-1 animate-fade-in absolute -bottom-4">
+                Detected: {detectedLabel}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Diff style toggle */}

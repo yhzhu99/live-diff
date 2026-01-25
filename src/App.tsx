@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { MultiFileDiff, type FileContents } from '@pierre/diffs/react'
+import hljs from 'highlight.js'
 import { Editor } from './components/Editor'
 import { Toolbar } from './components/Toolbar'
 import { Header } from './components/Header'
@@ -35,7 +36,8 @@ type DiffStyle = 'split' | 'unified'
 export default function App() {
   const [originalContent, setOriginalContent] = useState('')
   const [modifiedContent, setModifiedContent] = useState('')
-  const [language, setLanguage] = useState('plaintext')
+  const [language, setLanguage] = useState('auto')
+  const [detectedLanguage, setDetectedLanguage] = useState('plaintext')
   const [diffStyle, setDiffStyle] = useState<DiffStyle>('split')
   const [darkMode, setDarkMode] = useState(true)
 
@@ -43,6 +45,29 @@ export default function App() {
   const [editorHeight, setEditorHeight] = useState(400)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const isResizing = useRef(false)
+
+  // Auto detection effect
+  useEffect(() => {
+    if (language !== 'auto') {
+      setDetectedLanguage(language)
+      return
+    }
+
+    const contentToDetect = modifiedContent || originalContent
+    if (!contentToDetect) {
+      setDetectedLanguage('plaintext')
+      return
+    }
+
+    try {
+      const result = hljs.highlightAuto(contentToDetect)
+      const detected = result.language || 'plaintext'
+      // Map hljs language to shiki language if needed (though they mostly match)
+      setDetectedLanguage(detected)
+    } catch (e) {
+      setDetectedLanguage('plaintext')
+    }
+  }, [language, originalContent, modifiedContent])
 
   // Get file extension from language
   const getExtension = (lang: string): string => {
@@ -75,14 +100,14 @@ export default function App() {
 
   // Create stable file objects
   const oldFile: FileContents = useMemo(() => ({
-    name: `original.${getExtension(language)}`,
+    name: `original.${getExtension(detectedLanguage)}`,
     contents: originalContent,
-  }), [originalContent, language])
+  }), [originalContent, detectedLanguage])
 
   const newFile: FileContents = useMemo(() => ({
-    name: `modified.${getExtension(language)}`,
+    name: `modified.${getExtension(detectedLanguage)}`,
     contents: modifiedContent,
-  }), [modifiedContent, language])
+  }), [modifiedContent, detectedLanguage])
 
   // Handle swap
   const handleSwap = useCallback(() => {
@@ -145,6 +170,7 @@ export default function App() {
         {/* Toolbar */}
         <Toolbar
           language={language}
+          detectedLanguage={detectedLanguage}
           languages={LANGUAGES}
           onLanguageChange={setLanguage}
           diffStyle={diffStyle}
