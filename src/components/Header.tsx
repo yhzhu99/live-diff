@@ -53,24 +53,22 @@ export function Header({
           <label className="text-xs font-medium text-surface-500 dark:text-surface-400">
             Language
           </label>
-          <div className="relative">
+          <div className="flex items-center gap-1.5 px-1 pb-1.5 pt-1 rounded-lg bg-surface-100 dark:bg-surface-800 border border-surface-200 dark:border-surface-700">
             <select
-              className="px-2.5 py-1.5 text-sm rounded-lg bg-surface-100 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 text-surface-700 dark:text-surface-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent cursor-pointer min-w-[120px]"
+              className="bg-transparent text-sm text-surface-700 dark:text-surface-300 focus:outline-none cursor-pointer pl-1.5 pr-1 py-0.5 min-w-[80px]"
               value={language}
               onChange={(e) => onLanguageChange(e.target.value)}
             >
               {allLanguages.map((lang) => (
-                <option key={lang.value} value={lang.value}>
+                <option key={lang.value} value={lang.value} className="bg-surface-100 dark:bg-surface-800">
                   {lang.label}
                 </option>
               ))}
             </select>
             {language === 'auto' && detectedLanguage !== 'plaintext' && (
-              <div className="absolute top-1/2 -translate-y-1/2 right-8 flex items-center pointer-events-none">
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20 whitespace-nowrap animate-fade-in">
-                  {detectedLabel}
-                </span>
-              </div>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20 whitespace-nowrap animate-fade-in mr-1">
+                {detectedLabel}
+              </span>
             )}
           </div>
         </div>
