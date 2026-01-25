@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { MultiFileDiff, type FileContents } from '@pierre/diffs/react'
 import { Editor } from './components/Editor'
 import { Toolbar } from './components/Toolbar'
@@ -38,6 +38,11 @@ export default function App() {
   const [language, setLanguage] = useState('plaintext')
   const [diffStyle, setDiffStyle] = useState<DiffStyle>('split')
   const [darkMode, setDarkMode] = useState(true)
+
+  // Layout states
+  const [editorHeight, setEditorHeight] = useState(400)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const isResizing = useRef(false)
 
   // Get file extension from language
   const getExtension = (lang: string): string => {
@@ -92,11 +97,42 @@ export default function App() {
     setModifiedContent('')
   }, [])
 
-  // Toggle dark mode
   const toggleDarkMode = useCallback(() => {
     setDarkMode(prev => !prev)
     document.body.classList.toggle('dark', !darkMode)
   }, [darkMode])
+
+  // Resizing logic
+  const startResizing = useCallback(() => {
+    isResizing.current = true
+    document.body.style.cursor = 'row-resize'
+    document.body.style.userSelect = 'none'
+  }, [])
+
+  const stopResizing = useCallback(() => {
+    isResizing.current = false
+    document.body.style.cursor = 'default'
+    document.body.style.userSelect = 'auto'
+  }, [])
+
+  const handleResize = useCallback((e: MouseEvent) => {
+    if (!isResizing.current) return
+    // Adjust editor height based on mouse position
+    // 160px is approx height of Header + Toolbar + Margins
+    const newHeight = e.clientY - 160
+    if (newHeight > 150 && newHeight < window.innerHeight - 200) {
+      setEditorHeight(newHeight)
+    }
+  }, [])
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleResize)
+    window.addEventListener('mouseup', stopResizing)
+    return () => {
+      window.removeEventListener('mousemove', handleResize)
+      window.removeEventListener('mouseup', stopResizing)
+    }
+  }, [handleResize, stopResizing])
 
   // Check if there's content to diff
   const hasDiff = originalContent.length > 0 || modifiedContent.length > 0
@@ -118,7 +154,10 @@ export default function App() {
         />
 
         {/* Editor Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-[300px]">
+        <div
+          className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-none"
+          style={{ height: `${editorHeight}px` }}
+        >
           <Editor
             title="Original (Input)"
             placeholder="Paste or drag your original content here..."
@@ -135,8 +174,13 @@ export default function App() {
           />
         </div>
 
+        {/* Resize Handle */}
+        {!isFullscreen && (
+          <div className="resize-handle" onMouseDown={startResizing} />
+        )}
+
         {/* Diff Preview Section */}
-        <div className="panel flex-1 min-h-[400px] flex flex-col animate-fade-in">
+        <div className={`panel flex-1 min-h-[200px] flex flex-col animate-fade-in ${isFullscreen ? 'panel-fullscreen' : ''}`}>
           <div className="panel-header">
             <h2 className="panel-title flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -144,11 +188,28 @@ export default function App() {
               </svg>
               Diff Preview
             </h2>
-            {hasDiff && (
-              <span className="text-xs text-surface-500 dark:text-surface-400">
-                {diffStyle === 'split' ? 'Side by Side' : 'Unified'} View
-              </span>
-            )}
+            <div className="flex items-center gap-3">
+              {hasDiff && (
+                <span className="text-xs text-surface-500 dark:text-surface-400">
+                  {diffStyle === 'split' ? 'Side by Side' : 'Unified'} View
+                </span>
+              )}
+              <button
+                onClick={() => setIsFullscreen(!isFullscreen)}
+                className="btn-ghost btn-icon"
+                title={isFullscreen ? "Exit Fullscreen" : "Fullscreen View"}
+              >
+                {isFullscreen ? (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="flex-1 overflow-auto p-4">
@@ -184,14 +245,24 @@ export default function App() {
         </div>
       </main>
 
+      {/* Backdrop for fullscreen mode */}
+      {isFullscreen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-fade-in"
+          onClick={() => setIsFullscreen(false)}
+        />
+      )}
+
       {/* Footer */}
-      <footer className="text-center py-4 text-sm text-surface-500 dark:text-surface-500 border-t border-surface-200 dark:border-surface-800">
-        Built with{' '}
-        <a href="https://diffs.com" target="_blank" rel="noopener noreferrer" className="text-primary-500 hover:underline">
-          @pierre/diffs
-        </a>
-        {' '}• Live Diff Tool
-      </footer>
+      {!isFullscreen && (
+        <footer className="text-center py-4 text-sm text-surface-500 dark:text-surface-500 border-t border-surface-200 dark:border-surface-800">
+          Built with{' '}
+          <a href="https://diffs.com" target="_blank" rel="noopener noreferrer" className="text-primary-500 hover:underline">
+            @pierre/diffs
+          </a>
+          {' '}• Live Diff Tool
+        </footer>
+      )}
     </div>
   )
 }
