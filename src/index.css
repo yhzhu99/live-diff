@@ -1,0 +1,185 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --diffs-font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  --diffs-font-size: 13px;
+  --diffs-line-height: 1.6;
+  --diffs-tab-size: 2;
+  --diffs-header-font-family: 'Inter', system-ui, sans-serif;
+  --diffs-gap-inline: 8px;
+  --diffs-gap-block: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.4);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.6);
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+/* Editor textarea styling */
+.editor-textarea {
+  @apply w-full h-full min-h-[200px] p-4 resize-none outline-none;
+  @apply bg-transparent text-surface-900 dark:text-surface-100;
+  @apply font-mono text-sm leading-relaxed;
+  @apply placeholder:text-surface-400 dark:placeholder:text-surface-500;
+}
+
+/* Drop zone styling */
+.drop-zone {
+  @apply relative transition-all duration-200;
+}
+
+.drop-zone.drag-over {
+  @apply ring-2 ring-primary-500 ring-inset;
+}
+
+.drop-zone.drag-over::after {
+  content: '';
+  @apply absolute inset-0 bg-primary-500/10 pointer-events-none;
+}
+
+/* Button styles */
+.btn {
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2;
+  @apply text-sm font-medium rounded-lg transition-all duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.btn-primary {
+  @apply bg-primary-600 text-white hover:bg-primary-700;
+  @apply focus:ring-primary-500;
+}
+
+.btn-secondary {
+  @apply bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300;
+  @apply hover:bg-surface-200 dark:hover:bg-surface-700;
+  @apply border border-surface-300 dark:border-surface-600;
+  @apply focus:ring-surface-400;
+}
+
+.btn-ghost {
+  @apply text-surface-600 dark:text-surface-400;
+  @apply hover:bg-surface-100 dark:hover:bg-surface-800;
+  @apply focus:ring-surface-400;
+}
+
+.btn-icon {
+  @apply p-2 rounded-lg;
+}
+
+/* Toggle button group */
+.toggle-group {
+  @apply inline-flex rounded-lg overflow-hidden;
+  @apply border border-surface-300 dark:border-surface-600;
+}
+
+.toggle-btn {
+  @apply px-3 py-1.5 text-sm font-medium transition-colors;
+  @apply text-surface-600 dark:text-surface-400;
+  @apply hover:bg-surface-100 dark:hover:bg-surface-800;
+}
+
+.toggle-btn.active {
+  @apply bg-primary-600 text-white;
+  @apply hover:bg-primary-700;
+}
+
+/* Diff container */
+.diff-container {
+  @apply w-full h-full overflow-auto;
+  @apply bg-surface-50 dark:bg-surface-900;
+  @apply rounded-lg border border-surface-200 dark:border-surface-700;
+}
+
+/* Panel styling */
+.panel {
+  @apply bg-white dark:bg-surface-900;
+  @apply border border-surface-200 dark:border-surface-700;
+  @apply rounded-xl shadow-sm;
+}
+
+.panel-header {
+  @apply flex items-center justify-between px-4 py-3;
+  @apply border-b border-surface-200 dark:border-surface-700;
+  @apply bg-surface-50 dark:bg-surface-800/50;
+  @apply rounded-t-xl;
+}
+
+.panel-title {
+  @apply text-sm font-semibold text-surface-700 dark:text-surface-300;
+}
+
+/* Select dropdown */
+.select {
+  @apply px-3 py-1.5 text-sm rounded-lg;
+  @apply bg-surface-100 dark:bg-surface-800;
+  @apply border border-surface-300 dark:border-surface-600;
+  @apply text-surface-700 dark:text-surface-300;
+  @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+  @apply cursor-pointer;
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
