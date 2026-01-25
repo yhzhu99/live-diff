@@ -47,8 +47,8 @@ export function SettingsModal({
       />
 
       {/* Modal */}
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md animate-slide-up">
-        <div className="bg-white dark:bg-surface-800 rounded-xl shadow-2xl border border-surface-200 dark:border-surface-700 overflow-hidden">
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md">
+        <div className="bg-white dark:bg-surface-800 rounded-xl shadow-2xl border border-surface-200 dark:border-surface-700 overflow-hidden animate-slide-up">
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-surface-200 dark:border-surface-700">
             <h2 className="text-base font-semibold text-surface-900 dark:text-white flex items-center gap-2">
