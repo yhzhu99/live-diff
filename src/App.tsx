@@ -41,6 +41,12 @@ export default function App() {
   const [diffStyle, setDiffStyle] = useState<DiffStyle>('split')
   const [darkMode, setDarkMode] = useState(true)
 
+  // Advanced Options
+  const [lineDiffType, setLineDiffType] = useState<'word-alt' | 'word' | 'char' | 'none'>('word-alt')
+  const [showBackgrounds, setShowBackgrounds] = useState(true)
+  const [wrapText, setWrapText] = useState(true)
+  const [showLineNumbers, setShowLineNumbers] = useState(true)
+
   // Layout states
   const [editorHeight, setEditorHeight] = useState(400)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -175,6 +181,16 @@ export default function App() {
           onLanguageChange={setLanguage}
           diffStyle={diffStyle}
           onDiffStyleChange={setDiffStyle}
+
+          lineDiffType={lineDiffType}
+          onLineDiffTypeChange={setLineDiffType}
+          showBackgrounds={showBackgrounds}
+          onToggleBackgrounds={() => setShowBackgrounds(!showBackgrounds)}
+          wrapText={wrapText}
+          onToggleWrap={() => setWrapText(!wrapText)}
+          showLineNumbers={showLineNumbers}
+          onToggleLineNumbers={() => setShowLineNumbers(!showLineNumbers)}
+
           onSwap={handleSwap}
           onClear={handleClear}
         />
@@ -248,7 +264,11 @@ export default function App() {
                     ? { dark: 'github-dark', light: 'github-light' }
                     : { dark: 'github-dark', light: 'github-light' },
                   diffStyle: diffStyle,
-                  enableLineWrapping: true,
+                  enableLineWrapping: wrapText, // Redundant but good to keep
+                  overflow: wrapText ? 'wrap' : 'scroll',
+                  lineDiffType: lineDiffType,
+                  disableBackground: !showBackgrounds,
+                  disableLineNumbers: !showLineNumbers,
                   hideHeader: true,
                 }}
                 style={{
