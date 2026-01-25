@@ -1,3 +1,5 @@
+import { useState, useRef, useEffect } from 'react'
+
 interface HeaderProps {
   darkMode: boolean
   onToggleDarkMode: () => void
@@ -29,8 +31,22 @@ export function Header({
   onClear,
   onOpenSettings,
 }: HeaderProps) {
+  const [isLanguageOpen, setIsLanguageOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
   const allLanguages = [{ value: 'auto', label: 'Auto ✨' }, ...languages]
+  const currentLanguageLabel = allLanguages.find(l => l.value === language)?.label || language
   const detectedLabel = languages.find(l => l.value === detectedLanguage)?.label || detectedLanguage
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsLanguageOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   return (
     <header className="flex items-center justify-between px-4 py-2.5 border-b border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-900">
@@ -53,22 +69,55 @@ export function Header({
           <label className="text-xs font-medium text-surface-500 dark:text-surface-400">
             Language
           </label>
-          <div className="flex items-center gap-1.5 px-1 pb-1.5 pt-1 rounded-lg bg-surface-100 dark:bg-surface-800 border border-surface-200 dark:border-surface-700">
-            <select
-              className="bg-transparent text-sm text-surface-700 dark:text-surface-300 focus:outline-none cursor-pointer pl-1.5 pr-1 py-0.5 min-w-[80px]"
-              value={language}
-              onChange={(e) => onLanguageChange(e.target.value)}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setIsLanguageOpen(!isLanguageOpen)}
+              className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-surface-100 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 hover:border-primary-500/50 transition-all duration-200 w-[200px] text-left group"
             >
-              {allLanguages.map((lang) => (
-                <option key={lang.value} value={lang.value} className="bg-surface-100 dark:bg-surface-800">
-                  {lang.label}
-                </option>
-              ))}
-            </select>
-            {language === 'auto' && detectedLanguage !== 'plaintext' && (
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20 whitespace-nowrap animate-fade-in mr-1">
-                {detectedLabel}
+              <span className="text-sm font-medium text-surface-700 dark:text-surface-300 truncate">
+                {currentLanguageLabel}
               </span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {language === 'auto' && detectedLanguage !== 'plaintext' && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20 whitespace-nowrap animate-fade-in shadow-sm">
+                    {detectedLabel}
+                  </span>
+                )}
+                <svg
+                  className={`w-4 h-4 text-surface-400 transition-transform duration-200 ${isLanguageOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </button>
+
+            {isLanguageOpen && (
+              <div className="absolute top-full left-0 right-0 mt-1.5 py-1.5 bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl shadow-xl z-50 animate-slide-up max-h-[400px] overflow-auto">
+                {allLanguages.map((lang) => (
+                  <button
+                    key={lang.value}
+                    onClick={() => {
+                      onLanguageChange(lang.value)
+                      setIsLanguageOpen(false)
+                    }}
+                    className={`w-full text-left px-3 py-1.5 text-sm transition-colors flex items-center justify-between ${
+                      language === lang.value
+                        ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-medium'
+                        : 'text-surface-600 dark:text-surface-400 hover:bg-surface-50 dark:hover:bg-surface-800'
+                    }`}
+                  >
+                    <span>{lang.label}</span>
+                    {language === lang.value && (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
         </div>
