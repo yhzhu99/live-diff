@@ -198,7 +198,7 @@ export function Header({
 
         {/* GitHub link */}
         <a
-          href="https://github.com"
+          href="https://github.com/yhzhu99/live-diff"
           target="_blank"
           rel="noopener noreferrer"
           className="p-2 rounded-lg text-surface-500 hover:text-surface-700 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
