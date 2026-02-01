@@ -9,8 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@pierre/diffs": "^1.0.7",
-    "diff": "^8.0.2",
     "highlight.js": "^11.11.1",
     "monaco-editor": "^0.52.0",
     "react": "^19.0.0",

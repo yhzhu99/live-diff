@@ -8,14 +8,9 @@ interface HeaderProps {
   detectedLanguage: string
   languages: { value: string; label: string }[]
   onLanguageChange: (lang: string) => void
-  // View controls
-  diffStyle: 'split' | 'unified'
-  onDiffStyleChange: (style: 'split' | 'unified') => void
   // Actions
   onSwap: () => void
   onClear: () => void
-  // Settings
-  onOpenSettings: () => void
 }
 
 export function Header({
@@ -25,11 +20,8 @@ export function Header({
   detectedLanguage,
   languages,
   onLanguageChange,
-  diffStyle,
-  onDiffStyleChange,
   onSwap,
   onClear,
-  onOpenSettings,
 }: HeaderProps) {
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -49,42 +41,42 @@ export function Header({
   }, [])
 
   return (
-    <header className="flex items-center justify-between px-4 py-2.5 border-b border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-900">
+    <header className="flex items-center justify-between px-5 py-3 border-b border-surface-200/80 dark:border-surface-800/80 bg-white/80 dark:bg-surface-900/80 backdrop-blur-xl sticky top-0 z-50">
       {/* Logo */}
-      <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-md shadow-primary-500/20">
-          <svg className="w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 flex items-center justify-center shadow-lg shadow-primary-500/25 ring-1 ring-white/20">
+          <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
           </svg>
         </div>
-        <h1 className="text-lg font-bold text-surface-900 dark:text-white">
+        <h1 className="text-lg font-bold bg-gradient-to-r from-surface-900 to-surface-600 dark:from-white dark:to-surface-300 bg-clip-text text-transparent">
           Live Diff
         </h1>
       </div>
 
       {/* Center Controls */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {/* Language Selector */}
         <div className="flex items-center gap-2">
-          <label className="text-xs font-medium text-surface-500 dark:text-surface-400">
+          <label className="text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider">
             Language
           </label>
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsLanguageOpen(!isLanguageOpen)}
-              className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-surface-100 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 hover:border-primary-500/50 transition-all duration-200 w-[200px] text-left group"
+              className="flex items-center justify-between gap-2 px-3.5 py-2 rounded-xl bg-surface-50 dark:bg-surface-800/80 border border-surface-200/80 dark:border-surface-700/80 hover:border-primary-500/50 hover:shadow-md hover:shadow-primary-500/5 transition-all duration-300 w-[200px] text-left group"
             >
               <span className="text-sm font-medium text-surface-700 dark:text-surface-300 truncate">
                 {currentLanguageLabel}
               </span>
               <div className="flex items-center gap-1.5 shrink-0">
                 {language === 'auto' && detectedLanguage !== 'plaintext' && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20 whitespace-nowrap animate-fade-in shadow-sm">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-gradient-to-r from-primary-500/10 to-primary-600/10 text-primary-600 dark:text-primary-400 border border-primary-500/20 whitespace-nowrap animate-fade-in shadow-sm">
                     {detectedLabel}
                   </span>
                 )}
                 <svg
-                  className={`w-4 h-4 text-surface-400 transition-transform duration-200 ${isLanguageOpen ? 'rotate-180' : ''}`}
+                  className={`w-4 h-4 text-surface-400 transition-transform duration-300 ${isLanguageOpen ? 'rotate-180' : ''}`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -95,7 +87,7 @@ export function Header({
             </button>
 
             {isLanguageOpen && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 py-1.5 bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl shadow-xl z-50 animate-slide-up max-h-[400px] overflow-auto">
+              <div className="absolute top-full left-0 right-0 mt-2 py-2 bg-white/95 dark:bg-surface-900/95 backdrop-blur-xl border border-surface-200/80 dark:border-surface-700/80 rounded-2xl shadow-2xl shadow-surface-900/10 dark:shadow-black/30 z-50 animate-slide-up max-h-[400px] overflow-auto">
                 {allLanguages.map((lang) => (
                   <button
                     key={lang.value}
@@ -103,10 +95,10 @@ export function Header({
                       onLanguageChange(lang.value)
                       setIsLanguageOpen(false)
                     }}
-                    className={`w-full text-left px-3 py-1.5 text-sm transition-colors flex items-center justify-between ${
+                    className={`w-full text-left px-4 py-2 text-sm transition-all duration-200 flex items-center justify-between ${
                       language === lang.value
-                        ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-medium'
-                        : 'text-surface-600 dark:text-surface-400 hover:bg-surface-50 dark:hover:bg-surface-800'
+                        ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium'
+                        : 'text-surface-600 dark:text-surface-400 hover:bg-surface-50 dark:hover:bg-surface-800/80'
                     }`}
                   >
                     <span>{lang.label}</span>
@@ -123,47 +115,15 @@ export function Header({
         </div>
 
         {/* Divider */}
-        <div className="w-px h-6 bg-surface-200 dark:bg-surface-700" />
-
-        {/* View Toggle */}
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-medium text-surface-500 dark:text-surface-400">
-            View
-          </label>
-          <div className="inline-flex rounded-lg overflow-hidden border border-surface-200 dark:border-surface-700">
-            <button
-              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                diffStyle === 'split'
-                  ? 'bg-primary-600 text-white'
-                  : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800'
-              }`}
-              onClick={() => onDiffStyleChange('split')}
-            >
-              Split
-            </button>
-            <button
-              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                diffStyle === 'unified'
-                  ? 'bg-primary-600 text-white'
-                  : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800'
-              }`}
-              onClick={() => onDiffStyleChange('unified')}
-            >
-              Unified
-            </button>
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div className="w-px h-6 bg-surface-200 dark:bg-surface-700" />
+        <div className="w-px h-7 bg-gradient-to-b from-transparent via-surface-300 to-transparent dark:via-surface-700" />
 
         {/* Swap Button */}
         <button
           onClick={onSwap}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl text-surface-600 dark:text-surface-400 hover:bg-surface-100/80 dark:hover:bg-surface-800/80 hover:text-surface-900 dark:hover:text-white transition-all duration-200 group"
           title="Swap original and modified content"
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
           </svg>
           Swap
@@ -172,7 +132,7 @@ export function Header({
         {/* Clear Button */}
         <button
           onClick={onClear}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition-all duration-200"
           title="Clear all content"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -183,25 +143,13 @@ export function Header({
       </div>
 
       {/* Right Controls */}
-      <div className="flex items-center gap-2">
-        {/* Settings */}
-        <button
-          onClick={onOpenSettings}
-          className="p-2 rounded-lg text-surface-500 hover:text-surface-700 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
-          title="Diff Settings"
-        >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        </button>
-
+      <div className="flex items-center gap-1.5">
         {/* GitHub link */}
         <a
           href="https://github.com/yhzhu99/live-diff"
           target="_blank"
           rel="noopener noreferrer"
-          className="p-2 rounded-lg text-surface-500 hover:text-surface-700 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+          className="p-2.5 rounded-xl text-surface-500 hover:text-surface-700 dark:hover:text-surface-300 hover:bg-surface-100/80 dark:hover:bg-surface-800/80 transition-all duration-200"
           title="View on GitHub"
         >
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -212,11 +160,11 @@ export function Header({
         {/* Dark mode toggle */}
         <button
           onClick={onToggleDarkMode}
-          className="p-2 rounded-lg text-surface-500 hover:text-surface-700 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+          className="p-2.5 rounded-xl text-surface-500 hover:text-surface-700 dark:hover:text-surface-300 hover:bg-surface-100/80 dark:hover:bg-surface-800/80 transition-all duration-200"
           title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
         >
           {darkMode ? (
-            <svg className="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
           ) : (

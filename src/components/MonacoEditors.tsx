@@ -7,16 +7,16 @@ type MonacoEditorsProps = {
   language: string
   darkMode: boolean
   editorHeight: number
-  diffHeight: number
   onChangeOriginal(value: string): void
   onChangeModified(value: string): void
+  mode: 'editors' | 'diff'
+  isFullscreen?: boolean
+  onToggleFullscreen?: () => void
   className?: string
 }
 
 const toMonacoLanguage = (lang: string) => {
-  // Keep existing UI options; map unknowns to plaintext.
   if (!lang || lang === 'auto' || lang === 'plaintext') return 'plaintext'
-  // Monaco uses 'shell' as 'shell'/'shellscript' depending on contrib; 'shell' works in many builds.
   if (lang === 'dockerfile') return 'dockerfile'
   if (lang === 'csharp') return 'csharp'
   return lang
@@ -28,9 +28,11 @@ export function MonacoEditors({
   language,
   darkMode,
   editorHeight,
-  diffHeight,
   onChangeOriginal,
   onChangeModified,
+  mode,
+  isFullscreen = false,
+  onToggleFullscreen,
   className,
 }: MonacoEditorsProps) {
   const originalEl = useRef<HTMLDivElement | null>(null)
@@ -50,90 +52,116 @@ export function MonacoEditors({
 
   const theme = useMemo(() => (darkMode ? 'vs-dark' : 'vs'), [darkMode])
 
+  // Initialize editors
   useEffect(() => {
-    if (!originalEl.current || !modifiedEl.current || !diffEl.current) return
+    if (mode === 'editors') {
+      if (!originalEl.current || !modifiedEl.current) return
 
-    // Models
-    originalModelRef.current = monaco.editor.createModel(original, monacoLang)
-    modifiedModelRef.current = monaco.editor.createModel(modified, monacoLang)
+      originalModelRef.current = monaco.editor.createModel(original, monacoLang)
+      modifiedModelRef.current = monaco.editor.createModel(modified, monacoLang)
 
-    diffOriginalModelRef.current = monaco.editor.createModel(original, monacoLang)
-    diffModifiedModelRef.current = monaco.editor.createModel(modified, monacoLang)
+      originalEditorRef.current = monaco.editor.create(originalEl.current, {
+        model: originalModelRef.current,
+        theme,
+        minimap: { enabled: false },
+        scrollBeyondLastLine: false,
+        automaticLayout: true,
+        fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+        fontSize: 13,
+        lineHeight: 20,
+        padding: { top: 12, bottom: 12 },
+        renderLineHighlight: 'line',
+        smoothScrolling: true,
+        cursorSmoothCaretAnimation: 'on',
+        cursorBlinking: 'smooth',
+      })
 
-    // Editors
-    originalEditorRef.current = monaco.editor.create(originalEl.current, {
-      model: originalModelRef.current,
-      theme,
-      minimap: { enabled: false },
-      scrollBeyondLastLine: false,
-      automaticLayout: true,
-      fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-      fontSize: 12,
-    })
+      modifiedEditorRef.current = monaco.editor.create(modifiedEl.current, {
+        model: modifiedModelRef.current,
+        theme,
+        minimap: { enabled: false },
+        scrollBeyondLastLine: false,
+        automaticLayout: true,
+        fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+        fontSize: 13,
+        lineHeight: 20,
+        padding: { top: 12, bottom: 12 },
+        renderLineHighlight: 'line',
+        smoothScrolling: true,
+        cursorSmoothCaretAnimation: 'on',
+        cursorBlinking: 'smooth',
+      })
 
-    modifiedEditorRef.current = monaco.editor.create(modifiedEl.current, {
-      model: modifiedModelRef.current,
-      theme,
-      minimap: { enabled: false },
-      scrollBeyondLastLine: false,
-      automaticLayout: true,
-      fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-      fontSize: 12,
-    })
+      const d1 = originalModelRef.current.onDidChangeContent(() => {
+        onChangeOriginal(originalModelRef.current?.getValue() ?? '')
+      })
+      const d2 = modifiedModelRef.current.onDidChangeContent(() => {
+        onChangeModified(modifiedModelRef.current?.getValue() ?? '')
+      })
 
-    diffEditorRef.current = monaco.editor.createDiffEditor(diffEl.current, {
-      theme,
-      // These options are the closest knobs to VSCode behavior.
-      ignoreTrimWhitespace: false,
-      renderSideBySide: true,
-      renderIndicators: true,
-      originalEditable: false,
-      readOnly: true,
-      enableSplitViewResizing: false,
-      automaticLayout: true,
-      scrollBeyondLastLine: false,
-      // This is the “scrollbar minimap markers” style you mentioned.
-      scrollbar: {
-        verticalScrollbarSize: 12,
-        vertical: 'auto',
-      },
-      minimap: { enabled: false },
-    })
-
-    diffEditorRef.current.setModel({
-      original: diffOriginalModelRef.current,
-      modified: diffModifiedModelRef.current,
-    })
-
-    const d1 = originalModelRef.current.onDidChangeContent(() => {
-      onChangeOriginal(originalModelRef.current?.getValue() ?? '')
-    })
-    const d2 = modifiedModelRef.current.onDidChangeContent(() => {
-      onChangeModified(modifiedModelRef.current?.getValue() ?? '')
-    })
-
-    return () => {
-      d1.dispose()
-      d2.dispose()
-
-      originalEditorRef.current?.dispose()
-      modifiedEditorRef.current?.dispose()
-      diffEditorRef.current?.dispose()
-
-      originalModelRef.current?.dispose()
-      modifiedModelRef.current?.dispose()
-      diffOriginalModelRef.current?.dispose()
-      diffModifiedModelRef.current?.dispose()
+      return () => {
+        d1.dispose()
+        d2.dispose()
+        originalEditorRef.current?.dispose()
+        modifiedEditorRef.current?.dispose()
+        originalModelRef.current?.dispose()
+        modifiedModelRef.current?.dispose()
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [mode === 'editors'])
 
-  // Keep theme in sync.
+  // Initialize diff editor
+  useEffect(() => {
+    if (mode === 'diff') {
+      if (!diffEl.current) return
+
+      diffOriginalModelRef.current = monaco.editor.createModel(original, monacoLang)
+      diffModifiedModelRef.current = monaco.editor.createModel(modified, monacoLang)
+
+      diffEditorRef.current = monaco.editor.createDiffEditor(diffEl.current, {
+        theme,
+        ignoreTrimWhitespace: false,
+        renderSideBySide: true,
+        renderIndicators: true,
+        originalEditable: false,
+        readOnly: true,
+        enableSplitViewResizing: true,
+        automaticLayout: true,
+        scrollBeyondLastLine: false,
+        scrollbar: {
+          verticalScrollbarSize: 10,
+          horizontal: 'auto',
+          vertical: 'auto',
+        },
+        minimap: { enabled: false },
+        fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+        fontSize: 13,
+        lineHeight: 20,
+        padding: { top: 12, bottom: 12 },
+        smoothScrolling: true,
+      })
+
+      diffEditorRef.current.setModel({
+        original: diffOriginalModelRef.current,
+        modified: diffModifiedModelRef.current,
+      })
+
+      return () => {
+        diffEditorRef.current?.dispose()
+        diffOriginalModelRef.current?.dispose()
+        diffModifiedModelRef.current?.dispose()
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode === 'diff'])
+
+  // Keep theme in sync
   useEffect(() => {
     monaco.editor.setTheme(theme)
   }, [theme])
 
-  // Keep language in sync.
+  // Keep language in sync
   useEffect(() => {
     const models = [
       originalModelRef.current,
@@ -147,53 +175,94 @@ export function MonacoEditors({
     }
   }, [monacoLang])
 
-  // Keep diff models in sync with current values.
+  // Sync content for editors mode
   useEffect(() => {
-    if (originalModelRef.current && originalModelRef.current.getValue() !== original) {
-      originalModelRef.current.setValue(original)
+    if (mode === 'editors') {
+      if (originalModelRef.current && originalModelRef.current.getValue() !== original) {
+        originalModelRef.current.setValue(original)
+      }
+      if (modifiedModelRef.current && modifiedModelRef.current.getValue() !== modified) {
+        modifiedModelRef.current.setValue(modified)
+      }
     }
-    if (modifiedModelRef.current && modifiedModelRef.current.getValue() !== modified) {
-      modifiedModelRef.current.setValue(modified)
-    }
+  }, [original, modified, mode])
 
-    if (diffOriginalModelRef.current && diffOriginalModelRef.current.getValue() !== original) {
-      diffOriginalModelRef.current.setValue(original)
+  // Sync content for diff mode
+  useEffect(() => {
+    if (mode === 'diff') {
+      if (diffOriginalModelRef.current && diffOriginalModelRef.current.getValue() !== original) {
+        diffOriginalModelRef.current.setValue(original)
+      }
+      if (diffModifiedModelRef.current && diffModifiedModelRef.current.getValue() !== modified) {
+        diffModifiedModelRef.current.setValue(modified)
+      }
     }
-    if (diffModifiedModelRef.current && diffModifiedModelRef.current.getValue() !== modified) {
-      diffModifiedModelRef.current.setValue(modified)
-    }
-  }, [original, modified])
+  }, [original, modified, mode])
+
+  if (mode === 'editors') {
+    return (
+      <div className={`grid grid-cols-1 lg:grid-cols-2 gap-4 ${className || ''}`} style={{ height: editorHeight }}>
+        <div className="editor-panel group">
+          <div className="editor-panel-header">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-red-400" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                Original
+              </span>
+            </div>
+          </div>
+          <div ref={originalEl} className="flex-1" />
+        </div>
+
+        <div className="editor-panel group">
+          <div className="editor-panel-header">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                Modified
+              </span>
+            </div>
+          </div>
+          <div ref={modifiedEl} className="flex-1" />
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className={className}>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 flex-none">
-        <div className="rounded-xl border border-surface-200 dark:border-surface-700 overflow-hidden">
-          <div className="px-4 py-2 text-sm font-semibold bg-surface-50 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700">
-            Original
+    <div className={`diff-panel flex-1 flex flex-col ${isFullscreen ? 'fullscreen-panel' : ''} ${className || ''}`}>
+      <div className="diff-panel-header">
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse" />
+            <div className="w-1.5 h-1.5 rounded-full bg-primary-400" />
+            <div className="w-1.5 h-1.5 rounded-full bg-primary-300" />
           </div>
-          <div ref={originalEl} style={{ height: editorHeight }} />
-        </div>
-
-        <div className="rounded-xl border border-surface-200 dark:border-surface-700 overflow-hidden">
-          <div className="px-4 py-2 text-sm font-semibold bg-surface-50 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700">
-            Modified
-          </div>
-          <div ref={modifiedEl} style={{ height: editorHeight }} />
-        </div>
-      </div>
-
-      <div className="panel flex-1 min-h-[200px] flex flex-col animate-fade-in mt-3">
-        <div className="panel-header py-2">
-          <h2 className="panel-title flex items-center gap-2 text-xs">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
+          <span className="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
             Diff Preview
-          </h2>
+          </span>
         </div>
 
-        <div ref={diffEl} style={{ height: diffHeight }} />
+        {onToggleFullscreen && (
+          <button
+            onClick={onToggleFullscreen}
+            className="p-1.5 rounded-lg text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700 transition-all duration-200"
+            title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+          >
+            {isFullscreen ? (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+            )}
+          </button>
+        )}
       </div>
+
+      <div ref={diffEl} className="flex-1 min-h-0" />
     </div>
   )
 }

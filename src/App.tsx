@@ -1,7 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import hljs from 'highlight.js'
 import { Header } from './components/Header'
-import { SettingsModal } from './components/SettingsModal'
 import { MonacoEditors } from './components/MonacoEditors'
 
 // Supported languages for syntax highlighting
@@ -31,52 +30,39 @@ const LANGUAGES = [
   { value: 'dockerfile', label: 'Dockerfile' },
 ]
 
-
 // LocalStorage keys
 const STORAGE_KEYS = {
   DARK_MODE: 'live-diff-dark-mode',
-  // DIFF_STYLE is deprecated (split only)
-  DIFF_STYLE: 'live-diff-diff-style',
-  LINE_DIFF_TYPE: 'live-diff-line-diff-type',
-  SHOW_BACKGROUNDS: 'live-diff-show-backgrounds',
-  WRAP_TEXT: 'live-diff-wrap-text',
-  SHOW_LINE_NUMBERS: 'live-diff-show-line-numbers',
   EDITOR_HEIGHT: 'live-diff-editor-height',
 }
 
 // Constraints for editor height
-const MIN_EDITOR_HEIGHT = 120
-const MAX_EDITOR_HEIGHT_RATIO = 0.5 // Max 50% of viewport
+const MIN_EDITOR_HEIGHT = 100
+const MAX_EDITOR_HEIGHT_RATIO = 0.6 // Max 60% of viewport
+const HEADER_HEIGHT = 56
 
 export default function App() {
   const [originalContent, setOriginalContent] = useState('')
   const [modifiedContent, setModifiedContent] = useState('')
   const [language, setLanguage] = useState('auto')
   const [detectedLanguage, setDetectedLanguage] = useState('plaintext')
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   // Initialize settings from localStorage
-  // Diff style is fixed to split.
-
   const [darkMode, setDarkMode] = useState(() => {
     const stored = localStorage.getItem(STORAGE_KEYS.DARK_MODE)
     return stored === 'true'
   })
 
-  // Settings Modal
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-
-  // Advanced Options from the previous renderer are deprecated with Monaco.
-
   // Layout states (top editors vs bottom diff)
   const [editorHeight, setEditorHeight] = useState(() => {
     const stored = localStorage.getItem(STORAGE_KEYS.EDITOR_HEIGHT)
     const parsed = parseInt(stored || '', 10)
-    return !isNaN(parsed) && parsed >= MIN_EDITOR_HEIGHT ? parsed : 250
+    return !isNaN(parsed) && parsed >= MIN_EDITOR_HEIGHT ? parsed : 220
   })
 
-  // Fullscreen currently disabled in Monaco layout.
-  const isFullscreen = false
   const isResizing = useRef(false)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const startResizing = useCallback(() => {
     isResizing.current = true
@@ -94,9 +80,8 @@ export default function App() {
     if (!isResizing.current) return
 
     const maxHeight = Math.floor(window.innerHeight * MAX_EDITOR_HEIGHT_RATIO)
-    const headerHeight = 52
-    const containerPadding = 12
-    const newHeight = e.clientY - headerHeight - containerPadding
+    const containerTop = HEADER_HEIGHT + 16 // header + padding
+    const newHeight = e.clientY - containerTop
 
     if (newHeight >= MIN_EDITOR_HEIGHT && newHeight <= maxHeight) {
       setEditorHeight(newHeight)
@@ -116,15 +101,11 @@ export default function App() {
     }
   }, [handleResize, stopResizing])
 
-  // Persist all settings to localStorage
+  // Persist settings to localStorage
   useEffect(() => {
     document.body.classList.toggle('dark', darkMode)
     localStorage.setItem(STORAGE_KEYS.DARK_MODE, String(darkMode))
   }, [darkMode])
-
-  // diffStyle is now fixed to split (Monaco diff editor).
-
-  // (deprecated settings persistence removed)
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.EDITOR_HEIGHT, String(editorHeight))
@@ -149,7 +130,7 @@ export default function App() {
         const result = hljs.highlightAuto(contentToDetect, languageSubset)
         const detected = result.language || 'plaintext'
         setDetectedLanguage(detected)
-      } catch (e) {
+      } catch {
         setDetectedLanguage('plaintext')
       }
     }, 200)
@@ -178,11 +159,12 @@ export default function App() {
     setDarkMode(prev => !prev)
   }, [])
 
-  // Old resize/fullscreen controls were for the textarea-based editor.
-  // Monaco handles layout internally.
+  const toggleFullscreen = useCallback(() => {
+    setIsFullscreen(prev => !prev)
+  }, [])
 
   return (
-    <div className={`min-h-screen flex flex-col ${darkMode ? 'dark bg-surface-950' : 'bg-surface-50'}`}>
+    <div className={`h-screen flex flex-col overflow-hidden ${darkMode ? 'dark bg-surface-950' : 'bg-surface-50'}`}>
       <Header
         darkMode={darkMode}
         onToggleDarkMode={toggleDarkMode}
@@ -190,44 +172,52 @@ export default function App() {
         detectedLanguage={detectedLanguage}
         languages={LANGUAGES}
         onLanguageChange={setLanguage}
-        diffStyle={'split'}
-        onDiffStyleChange={() => {}}
         onSwap={handleSwap}
         onClear={handleClear}
-        onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
-      <main className="flex-1 flex flex-col p-3 gap-3 max-w-[1800px] mx-auto w-full">
-        {/* Editors + Diff (Monaco) */}
-        <div className="flex-none">
-          <MonacoEditors
-            original={originalContent}
-            modified={modifiedContent}
-            language={effectiveLanguage}
-            darkMode={darkMode}
-            editorHeight={editorHeight}
-            diffHeight={diffHeight}
-            onChangeOriginal={setOriginalContent}
-            onChangeModified={setModifiedContent}
-          />
-        </div>
-
-        {/* Resize Handle (restored) */}
+      <main ref={containerRef} className="flex-1 flex flex-col p-4 gap-0 overflow-hidden">
+        {/* Top: Monaco Editors */}
         {!isFullscreen && (
-          <div className="flex-none -my-1.5 py-1.5 z-20">
-            <div className="resize-handle" onMouseDown={startResizing} />
-          </div>
+          <>
+            <MonacoEditors
+              original={originalContent}
+              modified={modifiedContent}
+              language={effectiveLanguage}
+              darkMode={darkMode}
+              editorHeight={editorHeight}
+              onChangeOriginal={setOriginalContent}
+              onChangeModified={setModifiedContent}
+              mode="editors"
+            />
+
+            {/* Resize Handle */}
+            <div className="resize-handle-container">
+              <div
+                className="resize-handle"
+                onMouseDown={startResizing}
+                title="Drag to resize"
+              >
+                <div className="resize-handle-bar" />
+              </div>
+            </div>
+          </>
         )}
+
+        {/* Bottom: Diff Preview */}
+        <MonacoEditors
+          original={originalContent}
+          modified={modifiedContent}
+          language={effectiveLanguage}
+          darkMode={darkMode}
+          editorHeight={editorHeight}
+          onChangeOriginal={setOriginalContent}
+          onChangeModified={setModifiedContent}
+          mode="diff"
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
+        />
       </main>
-
-      {/* Fullscreen disabled */}
-
-      {/* Footer */}
-
-
-      {/* Settings Modal */}
-      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   )
 }
-  const diffHeight = 420
