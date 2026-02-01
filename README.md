@@ -16,10 +16,9 @@
 ## 🚀 Key Features
 
 - **⚡ Real-time Diffing**: Instant feedback as you type or paste—no lag, no waiting.
-- **🔍 Precision Granularity**: Toggle between **Word-level** and **Character-level** diffing to find the most subtle changes.
 - **🌈 Smart Syntax Highlighting**: Auto-detection or manual selection for 20+ languages including JS, TS, Python, TeX, and more.
 - **🌓 Adaptive Themes**: Beautifully crafted Light and Dark modes that respect your eyes and OS preferences.
-- **📊 Live Insights**: Word counts, line counts, and modification metrics updated in real-time.
+- **📊 Live Insights**: Word and character counts updated in real-time.
 - **🛠️ Professional Layout**:
   - **Split & Unified Views**: Choose the best way to visualize changes.
   - **Resizable Workspace**: Adjust the editor and diff preview heights to fit your flow.
@@ -34,7 +33,6 @@
 | **TypeScript** | Ensuring rock-solid type safety throughout the app. |
 | **Vite** | Ultra-fast build and development experience. |
 | **Tailwind CSS** | Modern styling for a sleek, responsive interface. |
-| **@pierre/diffs** | Robust and highly accurate core diffing engine. |
 | **Monaco Editor** | The power of VS Code's editor right in your browser. |
 
 ## 📦 Getting Started
@@ -62,14 +60,13 @@
    ```
 
 4. **Enjoy**
-   Open your browser to [http://localhost:5173](http://localhost:5173) and start comparing!
+   Open your browser to [http://localhost:3000](http://localhost:3000) and start comparing!
 
 ## 📖 How to Use
 
 1. **Input**: Paste your *original* content on the left and *modified* content on the right.
 2. **Configure**: Use the **Language** selector for specialized syntax highlighting.
-3. **Refine**: Click the gear icon (Settings) to adjust diff style or editor behavior.
-4. **Compare**: Scroll through the **Diff Preview** at the bottom to see highlighted changes.
+3. **Compare**: Scroll through the **Diff Preview** at the bottom to see highlighted changes.
 
 ## 📄 License
 
