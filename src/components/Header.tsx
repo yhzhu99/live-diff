@@ -44,14 +44,20 @@ export function Header({
     <header className="flex items-center justify-between px-5 py-3 border-b border-surface-200/80 dark:border-surface-800/80 bg-white/80 dark:bg-surface-900/80 backdrop-blur-xl sticky top-0 z-50">
       {/* Logo */}
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 flex items-center justify-center shadow-lg shadow-primary-500/25 ring-1 ring-white/20">
-          <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-          </svg>
+        <div className="relative group">
+          <div className="absolute -inset-1 bg-gradient-to-r from-primary-500 to-emerald-500 rounded-xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+          <div className="relative w-10 h-10 rounded-xl bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 flex items-center justify-center overflow-hidden shadow-sm">
+            <img src="/logo.svg" alt="Live Diff Logo" className="w-7 h-7" />
+          </div>
         </div>
-        <h1 className="text-lg font-bold bg-gradient-to-r from-surface-900 to-surface-600 dark:from-white dark:to-surface-300 bg-clip-text text-transparent">
-          Live Diff
-        </h1>
+        <div className="flex flex-col">
+          <h1 className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-surface-900 via-primary-600 to-emerald-600 dark:from-white dark:via-primary-400 dark:to-emerald-400 bg-clip-text text-transparent">
+            Live Diff
+          </h1>
+          <span className="text-[10px] font-semibold text-surface-400 dark:text-surface-500 uppercase tracking-[0.2em] leading-none">
+            Real-time Comparison
+          </span>
+        </div>
       </div>
 
       {/* Center Controls */}
