@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import * as monaco from 'monaco-editor'
+import { getTextStats, TextStats } from '../utils/textStats'
 
 type MonacoEditorsProps = {
   original: string
@@ -9,6 +10,8 @@ type MonacoEditorsProps = {
   editorHeight: number
   onChangeOriginal(value: string): void
   onChangeModified(value: string): void
+  onClearOriginal(): void
+  onClearModified(): void
   mode: 'editors' | 'diff'
   isFullscreen?: boolean
   onToggleFullscreen?: () => void
@@ -30,6 +33,8 @@ export function MonacoEditors({
   editorHeight,
   onChangeOriginal,
   onChangeModified,
+  onClearOriginal,
+  onClearModified,
   mode,
   isFullscreen = false,
   onToggleFullscreen,
@@ -40,6 +45,70 @@ export function MonacoEditors({
   const diffEl = useRef<HTMLDivElement | null>(null)
 
   const monacoLang = useMemo(() => toMonacoLanguage(language), [language])
+
+  // Drag states for file upload
+  const [originalDragOver, setOriginalDragOver] = useState(false)
+  const [modifiedDragOver, setModifiedDragOver] = useState(false)
+
+  // Text statistics
+  const originalStats = useMemo<TextStats>(() => getTextStats(original), [original])
+  const modifiedStats = useMemo<TextStats>(() => getTextStats(modified), [modified])
+
+  // Copy text to clipboard
+  const copyToClipboard = useCallback(async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch (err) {
+      console.error('Failed to copy text:', err)
+    }
+  }, [])
+
+  // Handle file drop
+  const handleFileDrop = useCallback((
+    e: React.DragEvent<HTMLDivElement>,
+    setContent: (value: string) => void,
+    setDragOver: (value: boolean) => void
+  ) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOver(false)
+
+    const files = e.dataTransfer.files
+    if (files.length === 0) return
+
+    const file = files[0]
+    // Only accept text files
+    if (!file.type.startsWith('text/') && !file.name.match(/\.(txt|md|json|js|ts|tsx|jsx|py|java|c|cpp|h|hpp|css|html|xml|yaml|yml|sh|go|rs|rb|php|swift|kt|sql|dockerfile)$/i)) {
+      console.warn('File type not supported for text parsing')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const text = event.target?.result as string
+      if (text) {
+        setContent(text)
+      }
+    }
+    reader.readAsText(file)
+  }, [])
+
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }, [])
+
+  const handleDragEnter = useCallback((setDragOver: (value: boolean) => void) => (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOver(true)
+  }, [])
+
+  const handleDragLeave = useCallback((setDragOver: (value: boolean) => void) => (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOver(false)
+  }, [])
 
   const originalEditorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
   const modifiedEditorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
@@ -205,28 +274,102 @@ export function MonacoEditors({
   if (mode === 'editors') {
     return (
       <div className={`grid grid-cols-1 lg:grid-cols-2 gap-4 ${className || ''}`} style={{ height: editorHeight }}>
-        <div className="editor-panel group">
+        {/* Original Panel */}
+        <div
+          className={`editor-panel group relative ${originalDragOver ? 'ring-2 ring-primary-500 ring-inset' : ''}`}
+          onDragOver={handleDragOver}
+          onDragEnter={handleDragEnter(setOriginalDragOver)}
+          onDragLeave={handleDragLeave(setOriginalDragOver)}
+          onDrop={(e) => handleFileDrop(e, onChangeOriginal, setOriginalDragOver)}
+        >
           <div className="editor-panel-header">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-red-400" />
               <span className="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
                 Original
               </span>
+              <span className="text-xs text-surface-400 dark:text-surface-500 font-mono ml-1">
+                {originalStats.chars} chars · {originalStats.words} words
+              </span>
+            </div>
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <button
+                onClick={() => copyToClipboard(original)}
+                className="p-1.5 rounded-lg text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700 transition-all duration-200"
+                title="Copy text"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </button>
+              <button
+                onClick={onClearOriginal}
+                className="p-1.5 rounded-lg text-surface-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-surface-100 dark:hover:bg-surface-700 transition-all duration-200"
+                title="Clear text"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
             </div>
           </div>
           <div ref={originalEl} className="flex-1" />
+          {originalDragOver && (
+            <div className="absolute inset-0 bg-primary-500/10 dark:bg-primary-400/10 flex items-center justify-center pointer-events-none z-10 rounded-2xl">
+              <div className="bg-white dark:bg-surface-800 px-4 py-2 rounded-xl shadow-lg border border-primary-200 dark:border-primary-700">
+                <span className="text-sm font-medium text-primary-600 dark:text-primary-400">Drop file here</span>
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="editor-panel group">
+        {/* Modified Panel */}
+        <div
+          className={`editor-panel group relative ${modifiedDragOver ? 'ring-2 ring-primary-500 ring-inset' : ''}`}
+          onDragOver={handleDragOver}
+          onDragEnter={handleDragEnter(setModifiedDragOver)}
+          onDragLeave={handleDragLeave(setModifiedDragOver)}
+          onDrop={(e) => handleFileDrop(e, onChangeModified, setModifiedDragOver)}
+        >
           <div className="editor-panel-header">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-emerald-400" />
               <span className="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
                 Modified
               </span>
+              <span className="text-xs text-surface-400 dark:text-surface-500 font-mono ml-1">
+                {modifiedStats.chars} chars · {modifiedStats.words} words
+              </span>
+            </div>
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <button
+                onClick={() => copyToClipboard(modified)}
+                className="p-1.5 rounded-lg text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700 transition-all duration-200"
+                title="Copy text"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </button>
+              <button
+                onClick={onClearModified}
+                className="p-1.5 rounded-lg text-surface-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-surface-100 dark:hover:bg-surface-700 transition-all duration-200"
+                title="Clear text"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
             </div>
           </div>
           <div ref={modifiedEl} className="flex-1" />
+          {modifiedDragOver && (
+            <div className="absolute inset-0 bg-primary-500/10 dark:bg-primary-400/10 flex items-center justify-center pointer-events-none z-10 rounded-2xl">
+              <div className="bg-white dark:bg-surface-800 px-4 py-2 rounded-xl shadow-lg border border-primary-200 dark:border-primary-700">
+                <span className="text-sm font-medium text-primary-600 dark:text-primary-400">Drop file here</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     )

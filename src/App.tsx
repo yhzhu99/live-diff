@@ -155,6 +155,14 @@ export default function App() {
     setModifiedContent('')
   }, [])
 
+  const handleClearOriginal = useCallback(() => {
+    setOriginalContent('')
+  }, [])
+
+  const handleClearModified = useCallback(() => {
+    setModifiedContent('')
+  }, [])
+
   const toggleDarkMode = useCallback(() => {
     setDarkMode(prev => !prev)
   }, [])
@@ -188,6 +196,8 @@ export default function App() {
               editorHeight={editorHeight}
               onChangeOriginal={setOriginalContent}
               onChangeModified={setModifiedContent}
+              onClearOriginal={handleClearOriginal}
+              onClearModified={handleClearModified}
               mode="editors"
             />
 
@@ -213,6 +223,8 @@ export default function App() {
           editorHeight={editorHeight}
           onChangeOriginal={setOriginalContent}
           onChangeModified={setModifiedContent}
+          onClearOriginal={handleClearOriginal}
+          onClearModified={handleClearModified}
           mode="diff"
           isFullscreen={isFullscreen}
           onToggleFullscreen={toggleFullscreen}
