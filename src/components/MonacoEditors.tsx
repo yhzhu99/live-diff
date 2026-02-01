@@ -292,10 +292,10 @@ export function MonacoEditors({
                 {originalStats.chars} chars · {originalStats.words} words
               </span>
             </div>
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => copyToClipboard(original)}
-                className="p-1.5 rounded-lg text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700 transition-all duration-200"
+                className="p-1.5 rounded-lg text-surface-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-all duration-200"
                 title="Copy text"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -304,7 +304,7 @@ export function MonacoEditors({
               </button>
               <button
                 onClick={onClearOriginal}
-                className="p-1.5 rounded-lg text-surface-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-surface-100 dark:hover:bg-surface-700 transition-all duration-200"
+                className="p-1.5 rounded-lg text-surface-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-all duration-200"
                 title="Clear text"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -315,9 +315,19 @@ export function MonacoEditors({
           </div>
           <div ref={originalEl} className="flex-1" />
           {originalDragOver && (
-            <div className="absolute inset-0 bg-primary-500/10 dark:bg-primary-400/10 flex items-center justify-center pointer-events-none z-10 rounded-2xl">
-              <div className="bg-white dark:bg-surface-800 px-4 py-2 rounded-xl shadow-lg border border-primary-200 dark:border-primary-700">
-                <span className="text-sm font-medium text-primary-600 dark:text-primary-400">Drop file here</span>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 rounded-2xl overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-500/20 via-primary-400/15 to-primary-600/20 dark:from-primary-400/20 dark:via-primary-500/15 dark:to-primary-400/20 backdrop-blur-[2px]" />
+              <div className="absolute inset-2 border-2 border-dashed border-primary-400 dark:border-primary-500 rounded-xl animate-pulse" />
+              <div className="relative flex flex-col items-center gap-3 bg-white/90 dark:bg-surface-800/90 px-6 py-4 rounded-2xl shadow-xl border border-primary-200 dark:border-primary-700">
+                <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-semibold text-primary-700 dark:text-primary-300">Drop file to upload</p>
+                  <p className="text-xs text-primary-500 dark:text-primary-400 mt-0.5">Supports text files</p>
+                </div>
               </div>
             </div>
           )}
@@ -341,10 +351,10 @@ export function MonacoEditors({
                 {modifiedStats.chars} chars · {modifiedStats.words} words
               </span>
             </div>
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => copyToClipboard(modified)}
-                className="p-1.5 rounded-lg text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700 transition-all duration-200"
+                className="p-1.5 rounded-lg text-surface-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-all duration-200"
                 title="Copy text"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -353,7 +363,7 @@ export function MonacoEditors({
               </button>
               <button
                 onClick={onClearModified}
-                className="p-1.5 rounded-lg text-surface-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-surface-100 dark:hover:bg-surface-700 transition-all duration-200"
+                className="p-1.5 rounded-lg text-surface-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-all duration-200"
                 title="Clear text"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -364,9 +374,19 @@ export function MonacoEditors({
           </div>
           <div ref={modifiedEl} className="flex-1" />
           {modifiedDragOver && (
-            <div className="absolute inset-0 bg-primary-500/10 dark:bg-primary-400/10 flex items-center justify-center pointer-events-none z-10 rounded-2xl">
-              <div className="bg-white dark:bg-surface-800 px-4 py-2 rounded-xl shadow-lg border border-primary-200 dark:border-primary-700">
-                <span className="text-sm font-medium text-primary-600 dark:text-primary-400">Drop file here</span>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 rounded-2xl overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-500/20 via-primary-400/15 to-primary-600/20 dark:from-primary-400/20 dark:via-primary-500/15 dark:to-primary-400/20 backdrop-blur-[2px]" />
+              <div className="absolute inset-2 border-2 border-dashed border-primary-400 dark:border-primary-500 rounded-xl animate-pulse" />
+              <div className="relative flex flex-col items-center gap-3 bg-white/90 dark:bg-surface-800/90 px-6 py-4 rounded-2xl shadow-xl border border-primary-200 dark:border-primary-700">
+                <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-semibold text-primary-700 dark:text-primary-300">Drop file to upload</p>
+                  <p className="text-xs text-primary-500 dark:text-primary-400 mt-0.5">Supports text files</p>
+                </div>
               </div>
             </div>
           )}
