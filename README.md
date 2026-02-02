@@ -20,9 +20,10 @@
 - **🌓 Adaptive Themes**: Beautifully crafted Light and Dark modes that respect your eyes and OS preferences.
 - **📊 Live Insights**: Word and character counts updated in real-time.
 - **🛠️ Professional Layout**:
-  - **Split & Unified Views**: Choose the best way to visualize changes.
+  - **Split & Unified Views**: Choose the best way to visualize changes with the click of a button or shortcut.
   - **Resizable Workspace**: Adjust the editor and diff preview heights to fit your flow.
   - **Fullscreen Diff**: Focus entirely on the changes with a distraction-free mode.
+- **⌨️ Keyboard First**: Powerful shortcuts for every common action.
 - **💾 Persistent Workspace**: Your settings (themes, heights, preferences) are automatically saved via LocalStorage.
 
 ## 🛠️ Built With
@@ -32,7 +33,7 @@
 | **React 19** | The foundation for a reactive and performant UI. |
 | **TypeScript** | Ensuring rock-solid type safety throughout the app. |
 | **Vite** | Ultra-fast build and development experience. |
-| **Tailwind CSS** | Modern styling for a sleek, responsive interface. |
+| **Tailwind CSS 4** | Modern styling for a sleek, responsive interface. |
 | **Monaco Editor** | The power of VS Code's editor right in your browser. |
 
 ## 📦 Getting Started
@@ -62,11 +63,21 @@
 4. **Enjoy**
    Open your browser to [http://localhost:3000](http://localhost:3000) and start comparing!
 
+## ⌨️ Keyboard Shortcuts
+
+| Shortcut | Action |
+| :--- | :--- |
+| `Cmd/Ctrl + S` | Swap original and modified content |
+| `Cmd/Ctrl + E` | Clear all content |
+| `Cmd/Ctrl + F` | Toggle Fullscreen Mode |
+| `Cmd/Ctrl + U` | Toggle Unified/Side-by-Side view |
+
 ## 📖 How to Use
 
 1. **Input**: Paste your *original* content on the left and *modified* content on the right.
-2. **Configure**: Use the **Language** selector for specialized syntax highlighting.
-3. **Compare**: Scroll through the **Diff Preview** at the bottom to see highlighted changes.
+2. **Configure**: Use the **Language** selector or let the **Auto-detect ✨** feature handle it.
+3. **Compare**: View highlights in the **Diff Preview**. Use **Unified View** for long documents.
+4. **Export**: Copy the modified content with a single click.
 
 ## 📄 License
 

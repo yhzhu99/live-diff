@@ -15,6 +15,8 @@ type MonacoEditorsProps = {
   mode: 'editors' | 'diff'
   isFullscreen?: boolean
   onToggleFullscreen?: () => void
+  renderSideBySide?: boolean
+  onToggleSideBySide?: () => void
   className?: string
 }
 
@@ -38,6 +40,8 @@ export function MonacoEditors({
   mode,
   isFullscreen = false,
   onToggleFullscreen,
+  renderSideBySide = true,
+  onToggleSideBySide,
   className,
 }: MonacoEditorsProps) {
   const originalEl = useRef<HTMLDivElement | null>(null)
@@ -53,6 +57,8 @@ export function MonacoEditors({
   // Text statistics
   const originalStats = useMemo<TextStats>(() => getTextStats(original), [original])
   const modifiedStats = useMemo<TextStats>(() => getTextStats(modified), [modified])
+
+  const isEmpty = useMemo(() => !original && !modified, [original, modified])
 
   // Copy text to clipboard
   const copyToClipboard = useCallback(async (text: string) => {
@@ -135,10 +141,10 @@ export function MonacoEditors({
         minimap: { enabled: false },
         scrollBeyondLastLine: false,
         automaticLayout: true,
-        fontFamily: "Consolas, 'Courier New', monospace",
+        fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace",
         fontSize: 13,
         lineHeight: 20,
-        fontLigatures: false,
+        fontLigatures: true,
         padding: { top: 12, bottom: 12 },
         renderLineHighlight: 'line',
         smoothScrolling: true,
@@ -152,10 +158,10 @@ export function MonacoEditors({
         minimap: { enabled: false },
         scrollBeyondLastLine: false,
         automaticLayout: true,
-        fontFamily: "Consolas, 'Courier New', monospace",
+        fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace",
         fontSize: 13,
         lineHeight: 20,
-        fontLigatures: false,
+        fontLigatures: true,
         padding: { top: 12, bottom: 12 },
         renderLineHighlight: 'line',
         smoothScrolling: true,
@@ -184,7 +190,7 @@ export function MonacoEditors({
 
   // Initialize diff editor
   useEffect(() => {
-    if (mode === 'diff') {
+    if (mode === 'diff' && !isEmpty) {
       if (!diffEl.current) return
 
       diffOriginalModelRef.current = monaco.editor.createModel(original, monacoLang)
@@ -193,7 +199,7 @@ export function MonacoEditors({
       diffEditorRef.current = monaco.editor.createDiffEditor(diffEl.current, {
         theme,
         ignoreTrimWhitespace: false,
-        renderSideBySide: true,
+        renderSideBySide,
         renderIndicators: true,
         originalEditable: false,
         readOnly: true,
@@ -201,15 +207,16 @@ export function MonacoEditors({
         automaticLayout: true,
         scrollBeyondLastLine: false,
         scrollbar: {
-          verticalScrollbarSize: 10,
+          verticalScrollbarSize: 8,
+          horizontalScrollbarSize: 8,
           horizontal: 'auto',
           vertical: 'auto',
         },
         minimap: { enabled: false },
-        fontFamily: "Consolas, 'Courier New', monospace",
+        fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace",
         fontSize: 13,
         lineHeight: 20,
-        fontLigatures: false,
+        fontLigatures: true,
         padding: { top: 12, bottom: 12 },
         smoothScrolling: true,
       })
@@ -226,7 +233,7 @@ export function MonacoEditors({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode === 'diff'])
+  }, [mode === 'diff', isEmpty, renderSideBySide])
 
   // Keep theme in sync
   useEffect(() => {
@@ -261,7 +268,7 @@ export function MonacoEditors({
 
   // Sync content for diff mode
   useEffect(() => {
-    if (mode === 'diff') {
+    if (mode === 'diff' && !isEmpty) {
       if (diffOriginalModelRef.current && diffOriginalModelRef.current.getValue() !== original) {
         diffOriginalModelRef.current.setValue(original)
       }
@@ -269,7 +276,7 @@ export function MonacoEditors({
         diffModifiedModelRef.current.setValue(modified)
       }
     }
-  }, [original, modified, mode])
+  }, [original, modified, mode, isEmpty])
 
   if (mode === 'editors') {
     return (
@@ -284,11 +291,13 @@ export function MonacoEditors({
         >
           <div className="editor-panel-header">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-red-400" />
-              <span className="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
-                Original
-              </span>
-              <span className="text-xs text-surface-400 dark:text-surface-500 font-mono ml-1">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800/50">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400">
+                  Original
+                </span>
+              </div>
+              <span className="text-[11px] text-surface-400 dark:text-surface-500 font-mono ml-1">
                 {originalStats.chars} chars · {originalStats.words} words
               </span>
             </div>
@@ -343,11 +352,13 @@ export function MonacoEditors({
         >
           <div className="editor-panel-header">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span className="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
-                Modified
-              </span>
-              <span className="text-xs text-surface-400 dark:text-surface-500 font-mono ml-1">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/50">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  Modified
+                </span>
+              </div>
+              <span className="text-[11px] text-surface-400 dark:text-surface-500 font-mono ml-1">
                 {modifiedStats.chars} chars · {modifiedStats.words} words
               </span>
             </div>
@@ -399,36 +410,105 @@ export function MonacoEditors({
     <div className={`diff-panel flex-1 flex flex-col ${isFullscreen ? 'fullscreen-panel' : ''} ${className || ''}`}>
       <div className="diff-panel-header">
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 group cursor-default">
             <div className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse" />
-            <div className="w-1.5 h-1.5 rounded-full bg-primary-400" />
-            <div className="w-1.5 h-1.5 rounded-full bg-primary-300" />
+            <div className="w-1.5 h-1.5 rounded-full bg-primary-400 opacity-60 group-hover:opacity-100 transition-opacity" />
+            <div className="w-1.5 h-1.5 rounded-full bg-primary-300 opacity-40 group-hover:opacity-100 transition-opacity" />
           </div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+          <span className="text-xs font-bold uppercase tracking-widest text-surface-500 dark:text-surface-400">
             Diff Preview
           </span>
         </div>
 
-        {onToggleFullscreen && (
-          <button
-            onClick={onToggleFullscreen}
-            className="p-1.5 rounded-lg text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700 transition-all duration-200"
-            title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-          >
-            {isFullscreen ? (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        <div className="flex items-center gap-1.5">
+          {onToggleSideBySide && (
+            <button
+              onClick={onToggleSideBySide}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all duration-300 ${
+                renderSideBySide
+                  ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border border-primary-200/50 dark:border-primary-800/50'
+                  : 'bg-surface-100 dark:bg-surface-800 text-surface-500 dark:text-surface-400 border border-transparent'
+              }`}
+              title={renderSideBySide ? 'Switch to Unified View (Cmd+U)' : 'Switch to Side-by-Side View (Cmd+U)'}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {renderSideBySide ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                )}
               </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              {renderSideBySide ? 'Side by Side' : 'Unified'}
+            </button>
+          )}
+
+          <div className="w-px h-4 bg-surface-200 dark:bg-surface-700 mx-1" />
+
+          {/* Copy Diff Button */}
+          {!isEmpty && (
+            <button
+              onClick={() => copyToClipboard(diffEditorRef.current?.getModifiedEditor().getValue() || '')}
+              className="p-1.5 rounded-lg text-surface-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-all duration-200"
+              title="Copy modified text"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
-            )}
-          </button>
-        )}
+            </button>
+          )}
+
+          {onToggleFullscreen && (
+            <button
+              onClick={onToggleFullscreen}
+              className="p-1.5 rounded-lg text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-all duration-200"
+              title={isFullscreen ? 'Exit fullscreen (Cmd+F)' : 'Fullscreen (Cmd+F)'}
+            >
+              {isFullscreen ? (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
-      <div ref={diffEl} className="flex-1 min-h-0" />
+      <div className="flex-1 relative min-h-0 bg-surface-50/30 dark:bg-surface-950/30">
+        {!isEmpty ? (
+          <div ref={diffEl} className="absolute inset-0" />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 animate-fade-in">
+            <div className="relative">
+              <div className="absolute -inset-4 bg-primary-500/10 dark:bg-primary-400/10 rounded-full blur-2xl animate-pulse" />
+              <div className="relative w-24 h-24 rounded-3xl bg-white dark:bg-surface-800 shadow-xl shadow-surface-900/5 border border-surface-200 dark:border-surface-700 flex items-center justify-center">
+                <svg className="w-12 h-12 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+            </div>
+            <div className="text-center space-y-2">
+              <h3 className="text-lg font-bold text-surface-900 dark:text-white">Compare anything instantly</h3>
+              <p className="text-sm text-surface-500 dark:text-surface-400 max-w-[280px]">
+                Paste your code snippets above or drag and drop files to see the magic happen.
+              </p>
+            </div>
+            <div className="flex items-center gap-4 pt-2">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-100 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 text-[10px] font-bold text-surface-400 uppercase tracking-widest">
+                <span className="text-surface-900 dark:text-white px-1.5 py-0.5 rounded bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700">⌘+S</span>
+                Swap
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-100 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 text-[10px] font-bold text-surface-400 uppercase tracking-widest">
+                <span className="text-surface-900 dark:text-white px-1.5 py-0.5 rounded bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700">⌘+E</span>
+                Clear
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

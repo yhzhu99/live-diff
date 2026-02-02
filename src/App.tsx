@@ -47,6 +47,7 @@ export default function App() {
   const [language, setLanguage] = useState('auto')
   const [detectedLanguage, setDetectedLanguage] = useState('plaintext')
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [renderSideBySide, setRenderSideBySide] = useState(true)
 
   // Initialize settings from localStorage
   const [darkMode, setDarkMode] = useState(() => {
@@ -171,6 +172,34 @@ export default function App() {
     setIsFullscreen(prev => !prev)
   }, [])
 
+  const toggleRenderSideBySide = useCallback(() => {
+    setRenderSideBySide(prev => !prev)
+  }, [])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault()
+        handleSwap()
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'e') {
+        e.preventDefault()
+        handleClear()
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+        e.preventDefault()
+        toggleFullscreen()
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'u') {
+        e.preventDefault()
+        toggleRenderSideBySide()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleSwap, handleClear, toggleFullscreen, toggleRenderSideBySide])
+
   return (
     <div className={`h-screen flex flex-col overflow-hidden ${darkMode ? 'bg-surface-950' : 'bg-surface-50'}`}>
       <Header
@@ -206,7 +235,8 @@ export default function App() {
               <div
                 className="resize-handle"
                 onMouseDown={startResizing}
-                title="Drag to resize"
+                title="Drag to resize (Hint: Double-click to reset)"
+                onDoubleClick={() => setEditorHeight(220)}
               >
                 <div className="resize-handle-bar" />
               </div>
@@ -228,6 +258,8 @@ export default function App() {
           mode="diff"
           isFullscreen={isFullscreen}
           onToggleFullscreen={toggleFullscreen}
+          renderSideBySide={renderSideBySide}
+          onToggleSideBySide={toggleRenderSideBySide}
         />
       </main>
     </div>
