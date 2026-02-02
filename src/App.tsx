@@ -103,7 +103,7 @@ export default function App() {
 
   // Persist settings to localStorage
   useEffect(() => {
-    document.body.classList.toggle('dark', darkMode)
+    document.documentElement.classList.toggle('dark', darkMode)
     localStorage.setItem(STORAGE_KEYS.DARK_MODE, String(darkMode))
   }, [darkMode])
 
@@ -172,7 +172,7 @@ export default function App() {
   }, [])
 
   return (
-    <div className={`h-screen flex flex-col overflow-hidden ${darkMode ? 'dark bg-surface-950' : 'bg-surface-50'}`}>
+    <div className={`h-screen flex flex-col overflow-hidden ${darkMode ? 'bg-surface-950' : 'bg-surface-50'}`}>
       <Header
         darkMode={darkMode}
         onToggleDarkMode={toggleDarkMode}
