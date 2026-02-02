@@ -213,7 +213,7 @@ export default function App() {
         onClear={handleClear}
       />
 
-      <main ref={containerRef} className="flex-1 flex flex-col p-4 gap-0 overflow-hidden">
+      <main ref={containerRef} className="flex-1 flex flex-col p-2 md:p-4 gap-0 overflow-hidden">
         {/* Top: Monaco Editors */}
         {!isFullscreen && (
           <>

@@ -41,7 +41,7 @@ export function Header({
   }, [])
 
   return (
-    <header className="flex items-center justify-between px-5 py-3 border-b border-surface-200/80 dark:border-surface-800/80 bg-white/80 dark:bg-surface-900/80 backdrop-blur-xl sticky top-0 z-50">
+    <header className="flex items-center justify-between px-3 md:px-5 py-3 border-b border-surface-200/80 dark:border-surface-800/80 bg-white/80 dark:bg-surface-900/80 backdrop-blur-xl sticky top-0 z-50 overflow-x-auto md:overflow-visible no-scrollbar">
       {/* Logo */}
       <div className="flex items-center gap-3 select-none">
         <div className="relative group cursor-pointer" onClick={() => window.location.reload()}>
@@ -50,7 +50,7 @@ export function Header({
             <img src="/logo.svg" alt="Live Diff Logo" className="w-7 h-7 group-hover:rotate-12 transition-transform duration-500" />
           </div>
         </div>
-        <div className="flex flex-col">
+        <div className="flex flex-col hidden sm:flex">
           <h1 className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-surface-900 via-primary-600 to-emerald-600 dark:from-white dark:via-primary-400 dark:to-emerald-400 bg-clip-text text-transparent leading-tight">
             Live Diff
           </h1>
@@ -63,14 +63,14 @@ export function Header({
       {/* Center Controls */}
       <div className="flex items-center gap-3 bg-surface-100/50 dark:bg-surface-800/50 p-1 rounded-2xl border border-surface-200/50 dark:border-surface-700/50">
         {/* Language Selector */}
-        <div className="relative" ref={dropdownRef}>
+        <div className="relative shrink-0" ref={dropdownRef}>
           <button
             onClick={() => setIsLanguageOpen(!isLanguageOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-white dark:hover:bg-surface-700 shadow-sm hover:shadow-md transition-all duration-300 min-w-[160px] text-left group border border-transparent hover:border-surface-200 dark:hover:border-surface-600"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-white dark:hover:bg-surface-700 shadow-sm hover:shadow-md transition-all duration-300 min-w-[120px] sm:min-w-[160px] text-left group border border-transparent hover:border-surface-200 dark:hover:border-surface-600"
           >
             <div className="flex-1 min-w-0">
-              <div className="text-[10px] font-bold text-surface-400 dark:text-surface-500 uppercase tracking-wider leading-none mb-0.5">Language</div>
-              <div className="text-sm font-bold text-surface-700 dark:text-surface-200 truncate pr-4">
+              <div className="text-[10px] font-bold text-surface-400 dark:text-surface-500 uppercase tracking-wider leading-none mb-0.5 hidden sm:block">Language</div>
+              <div className="text-sm font-bold text-surface-700 dark:text-surface-200 truncate pr-4 sm:pr-4">
                 {currentLanguageLabel}
               </div>
             </div>
@@ -135,7 +135,7 @@ export function Header({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
           </div>
-          <span className="text-xs font-bold uppercase tracking-wider">Swap</span>
+          <span className="hidden sm:block text-xs font-bold uppercase tracking-wider">Swap</span>
         </button>
 
         {/* Clear Button */}
@@ -149,7 +149,7 @@ export function Header({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
           </div>
-          <span className="text-xs font-bold uppercase tracking-wider">Clear</span>
+          <span className="hidden sm:block text-xs font-bold uppercase tracking-wider">Clear</span>
         </button>
       </div>
 

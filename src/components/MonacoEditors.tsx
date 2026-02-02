@@ -190,7 +190,7 @@ export function MonacoEditors({
 
   // Initialize diff editor
   useEffect(() => {
-    if (mode === 'diff' && !isEmpty) {
+    if (mode === 'diff') {
       if (!diffEl.current) return
 
       diffOriginalModelRef.current = monaco.editor.createModel(original, monacoLang)
@@ -233,7 +233,7 @@ export function MonacoEditors({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode === 'diff', isEmpty, renderSideBySide])
+  }, [mode === 'diff', renderSideBySide])
 
   // Keep theme in sync
   useEffect(() => {
@@ -276,14 +276,17 @@ export function MonacoEditors({
         diffModifiedModelRef.current.setValue(modified)
       }
     }
-  }, [original, modified, mode, isEmpty])
+  }, [original, modified, mode])
 
   if (mode === 'editors') {
     return (
-      <div className={`grid grid-cols-1 lg:grid-cols-2 gap-4 ${className || ''}`} style={{ height: editorHeight }}>
+      <div
+        className={`grid grid-cols-1 lg:grid-cols-2 gap-4 ${className || ''} h-auto lg:h-[var(--editor-height)]`}
+        style={{ '--editor-height': `${editorHeight}px` } as React.CSSProperties}
+      >
         {/* Original Panel */}
         <div
-          className={`editor-panel group relative ${originalDragOver ? 'ring-2 ring-primary-500 ring-inset' : ''}`}
+          className={`editor-panel group relative h-[300px] lg:h-full ${originalDragOver ? 'ring-2 ring-primary-500 ring-inset' : ''}`}
           onDragOver={handleDragOver}
           onDragEnter={handleDragEnter(setOriginalDragOver)}
           onDragLeave={handleDragLeave(setOriginalDragOver)}
@@ -344,7 +347,7 @@ export function MonacoEditors({
 
         {/* Modified Panel */}
         <div
-          className={`editor-panel group relative ${modifiedDragOver ? 'ring-2 ring-primary-500 ring-inset' : ''}`}
+          className={`editor-panel group relative h-[300px] lg:h-full ${modifiedDragOver ? 'ring-2 ring-primary-500 ring-inset' : ''}`}
           onDragOver={handleDragOver}
           onDragEnter={handleDragEnter(setModifiedDragOver)}
           onDragLeave={handleDragLeave(setModifiedDragOver)}
@@ -478,9 +481,8 @@ export function MonacoEditors({
       </div>
 
       <div className="flex-1 relative min-h-0 bg-surface-50/30 dark:bg-surface-950/30">
-        {!isEmpty ? (
-          <div ref={diffEl} className="absolute inset-0" />
-        ) : (
+        <div ref={diffEl} className={`absolute inset-0 ${isEmpty ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} />
+        {isEmpty && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 animate-fade-in">
             <div className="relative">
               <div className="absolute -inset-4 bg-primary-500/10 dark:bg-primary-400/10 rounded-full blur-2xl animate-pulse" />
