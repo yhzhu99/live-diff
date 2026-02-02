@@ -233,7 +233,14 @@ export function MonacoEditors({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode === 'diff', renderSideBySide])
+  }, [mode === 'diff'])
+
+  // Update renderSideBySide option dynamically
+  useEffect(() => {
+    if (mode === 'diff' && diffEditorRef.current) {
+      diffEditorRef.current.updateOptions({ renderSideBySide })
+    }
+  }, [mode, renderSideBySide])
 
   // Keep theme in sync
   useEffect(() => {
@@ -410,7 +417,7 @@ export function MonacoEditors({
   }
 
   return (
-    <div className={`diff-panel flex-1 flex flex-col ${isFullscreen ? 'fullscreen-panel' : ''} ${className || ''}`}>
+    <div className={`diff-panel flex-1 flex flex-col min-h-[400px] md:min-h-0 ${isFullscreen ? 'fullscreen-panel' : ''} ${className || ''}`}>
       <div className="diff-panel-header">
         <div className="flex items-center gap-2.5">
           <div className="flex items-center gap-1.5 group cursor-default">
@@ -424,10 +431,11 @@ export function MonacoEditors({
         </div>
 
         <div className="flex items-center gap-1.5">
+          {/* Hide toggle on mobile since Monaco doesn't support side-by-side on narrow screens */}
           {onToggleSideBySide && (
             <button
               onClick={onToggleSideBySide}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all duration-300 ${
+              className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all duration-300 ${
                 renderSideBySide
                   ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border border-primary-200/50 dark:border-primary-800/50'
                   : 'bg-surface-100 dark:bg-surface-800 text-surface-500 dark:text-surface-400 border border-transparent'
@@ -445,7 +453,7 @@ export function MonacoEditors({
             </button>
           )}
 
-          <div className="w-px h-4 bg-surface-200 dark:bg-surface-700 mx-1" />
+          <div className="hidden md:block w-px h-4 bg-surface-200 dark:bg-surface-700 mx-1" />
 
           {/* Copy Diff Button */}
           {!isEmpty && (

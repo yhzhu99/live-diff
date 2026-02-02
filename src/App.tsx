@@ -201,7 +201,7 @@ export default function App() {
   }, [handleSwap, handleClear, toggleFullscreen, toggleRenderSideBySide])
 
   return (
-    <div className={`h-screen flex flex-col overflow-hidden ${darkMode ? 'bg-surface-950' : 'bg-surface-50'}`}>
+    <div className={`min-h-screen md:h-screen flex flex-col overflow-y-auto md:overflow-hidden ${darkMode ? 'bg-surface-950' : 'bg-surface-50'}`}>
       <Header
         darkMode={darkMode}
         onToggleDarkMode={toggleDarkMode}
@@ -213,7 +213,7 @@ export default function App() {
         onClear={handleClear}
       />
 
-      <main ref={containerRef} className="flex-1 flex flex-col p-2 md:p-4 gap-0 overflow-hidden">
+      <main ref={containerRef} className="flex-1 flex flex-col p-2 md:p-4 gap-0 overflow-visible md:overflow-hidden">
         {/* Top: Monaco Editors */}
         {!isFullscreen && (
           <>
