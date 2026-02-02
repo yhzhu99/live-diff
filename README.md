@@ -4,9 +4,9 @@
   <p><b>Modern, real-time, and high-granularity code comparison tool.</b></p>
 
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-  [![React](https://img.shields.io/badge/React-19-blue.svg?logo=react)](https://react.dev/)
-  [![Vite](https://img.shields.io/badge/Vite-6-646CFF.svg?logo=vite)](https://vitejs.dev/)
-  [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC.svg?logo=tailwind-css)](https://tailwindcss.com/)
+  [![React](https://img.shields.io/badge/React-19.2-blue.svg?logo=react)](https://react.dev/)
+  [![Vite](https://img.shields.io/badge/Vite-7.3-646CFF.svg?logo=vite)](https://vitejs.dev/)
+  [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.1-38B2AC.svg?logo=tailwind-css)](https://tailwindcss.com/)
 </div>
 
 ---
@@ -32,7 +32,7 @@
 | :--- | :--- |
 | **React 19** | The foundation for a reactive and performant UI. |
 | **TypeScript** | Ensuring rock-solid type safety throughout the app. |
-| **Vite** | Ultra-fast build and development experience. |
+| **Vite 7** | Ultra-fast build and development experience. |
 | **Tailwind CSS 4** | Modern styling for a sleek, responsive interface. |
 | **Monaco Editor** | The power of VS Code's editor right in your browser. |
 
