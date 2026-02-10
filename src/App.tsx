@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
+import * as monaco from 'monaco-editor'
 import hljs from 'highlight.js'
 import { Header } from './components/Header'
 import { MonacoEditors } from './components/MonacoEditors'
@@ -41,13 +42,31 @@ const MIN_EDITOR_HEIGHT = 100
 const MAX_EDITOR_HEIGHT_RATIO = 0.6 // Max 60% of viewport
 const HEADER_HEIGHT = 56
 
+const toMonacoLanguage = (lang: string) => {
+  if (!lang || lang === 'auto' || lang === 'plaintext') return 'plaintext'
+  if (lang === 'dockerfile') return 'dockerfile'
+  if (lang === 'csharp') return 'csharp'
+  return lang
+}
+
 export default function App() {
-  const [originalContent, setOriginalContent] = useState('')
-  const [modifiedContent, setModifiedContent] = useState('')
   const [language, setLanguage] = useState('auto')
   const [detectedLanguage, setDetectedLanguage] = useState('plaintext')
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [renderSideBySide, setRenderSideBySide] = useState(true)
+
+  // Create shared Monaco models ONCE — stable across React Strict Mode re-mounts.
+  // useRef with lazy init: models are never disposed, they live for the app's lifetime.
+  const originalModelRef = useRef<monaco.editor.ITextModel | null>(null)
+  const modifiedModelRef = useRef<monaco.editor.ITextModel | null>(null)
+  if (!originalModelRef.current || originalModelRef.current.isDisposed()) {
+    originalModelRef.current = monaco.editor.createModel('', 'plaintext')
+  }
+  if (!modifiedModelRef.current || modifiedModelRef.current.isDisposed()) {
+    modifiedModelRef.current = monaco.editor.createModel('', 'plaintext')
+  }
+  const originalModel = originalModelRef.current
+  const modifiedModel = modifiedModelRef.current
 
   // Initialize settings from localStorage
   const [darkMode, setDarkMode] = useState(() => {
@@ -112,57 +131,84 @@ export default function App() {
     localStorage.setItem(STORAGE_KEYS.EDITOR_HEIGHT, String(editorHeight))
   }, [editorHeight])
 
-  // Auto detection effect
+  // Debounced language auto-detection via model change events
   useEffect(() => {
     if (language !== 'auto') {
       setDetectedLanguage(language)
       return
     }
 
-    const timer = setTimeout(() => {
-      const contentToDetect = `${originalContent}\n${modifiedContent}`.trim()
-      if (!contentToDetect) {
-        setDetectedLanguage('plaintext')
-        return
-      }
+    let timer: ReturnType<typeof setTimeout> | null = null
 
-      try {
-        const languageSubset = LANGUAGES.map(l => l.value).filter(v => v !== 'plaintext')
-        const result = hljs.highlightAuto(contentToDetect, languageSubset)
-        const detected = result.language || 'plaintext'
-        setDetectedLanguage(detected)
-      } catch {
-        setDetectedLanguage('plaintext')
-      }
-    }, 200)
+    const detect = () => {
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(() => {
+        // Only sample the first 2000 chars to avoid heavy computation
+        const origSample = originalModel.getValue(monaco.editor.EndOfLinePreference.LF, false).substring(0, 1000)
+        const modSample = modifiedModel.getValue(monaco.editor.EndOfLinePreference.LF, false).substring(0, 1000)
+        const contentToDetect = `${origSample}\n${modSample}`.trim()
+        if (!contentToDetect) {
+          setDetectedLanguage('plaintext')
+          return
+        }
 
-    return () => clearTimeout(timer)
-  }, [language, originalContent, modifiedContent])
+        try {
+          const languageSubset = LANGUAGES.map(l => l.value).filter(v => v !== 'plaintext')
+          const result = hljs.highlightAuto(contentToDetect, languageSubset)
+          setDetectedLanguage(result.language || 'plaintext')
+        } catch {
+          setDetectedLanguage('plaintext')
+        }
+      }, 500) // 500ms debounce
+    }
+
+    // Initial detection
+    detect()
+
+    // Listen to model changes for re-detection
+    const d1 = originalModel.onDidChangeContent(detect)
+    const d2 = modifiedModel.onDidChangeContent(detect)
+
+    return () => {
+      if (timer) clearTimeout(timer)
+      d1.dispose()
+      d2.dispose()
+    }
+  }, [language, originalModel, modifiedModel])
 
   const effectiveLanguage = useMemo(() => {
     return language === 'auto' ? detectedLanguage : language
   }, [language, detectedLanguage])
 
-  // Handle swap
-  const handleSwap = useCallback(() => {
-    const temp = originalContent
-    setOriginalContent(modifiedContent)
-    setModifiedContent(temp)
-  }, [originalContent, modifiedContent])
+  const monacoLang = useMemo(() => toMonacoLanguage(effectiveLanguage), [effectiveLanguage])
 
-  // Handle clear
+  // Keep language in sync on shared models
+  useEffect(() => {
+    monaco.editor.setModelLanguage(originalModel, monacoLang)
+    monaco.editor.setModelLanguage(modifiedModel, monacoLang)
+  }, [monacoLang, originalModel, modifiedModel])
+
+  // Handle swap — directly swap model values
+  const handleSwap = useCallback(() => {
+    const origVal = originalModel.getValue()
+    const modVal = modifiedModel.getValue()
+    originalModel.setValue(modVal)
+    modifiedModel.setValue(origVal)
+  }, [originalModel, modifiedModel])
+
+  // Handle clear — directly clear model values
   const handleClear = useCallback(() => {
-    setOriginalContent('')
-    setModifiedContent('')
-  }, [])
+    originalModel.setValue('')
+    modifiedModel.setValue('')
+  }, [originalModel, modifiedModel])
 
   const handleClearOriginal = useCallback(() => {
-    setOriginalContent('')
-  }, [])
+    originalModel.setValue('')
+  }, [originalModel])
 
   const handleClearModified = useCallback(() => {
-    setModifiedContent('')
-  }, [])
+    modifiedModel.setValue('')
+  }, [modifiedModel])
 
   const toggleDarkMode = useCallback(() => {
     setDarkMode(prev => !prev)
@@ -218,13 +264,10 @@ export default function App() {
         {!isFullscreen && (
           <>
             <MonacoEditors
-              original={originalContent}
-              modified={modifiedContent}
-              language={effectiveLanguage}
+              originalModel={originalModel}
+              modifiedModel={modifiedModel}
               darkMode={darkMode}
               editorHeight={editorHeight}
-              onChangeOriginal={setOriginalContent}
-              onChangeModified={setModifiedContent}
               onClearOriginal={handleClearOriginal}
               onClearModified={handleClearModified}
               mode="editors"
@@ -246,13 +289,10 @@ export default function App() {
 
         {/* Bottom: Diff Preview */}
         <MonacoEditors
-          original={originalContent}
-          modified={modifiedContent}
-          language={effectiveLanguage}
+          originalModel={originalModel}
+          modifiedModel={modifiedModel}
           darkMode={darkMode}
           editorHeight={editorHeight}
-          onChangeOriginal={setOriginalContent}
-          onChangeModified={setModifiedContent}
           onClearOriginal={handleClearOriginal}
           onClearModified={handleClearModified}
           mode="diff"

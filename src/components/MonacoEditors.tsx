@@ -3,13 +3,10 @@ import * as monaco from 'monaco-editor'
 import { getTextStats, TextStats } from '../utils/textStats'
 
 type MonacoEditorsProps = {
-  original: string
-  modified: string
-  language: string
+  originalModel: monaco.editor.ITextModel
+  modifiedModel: monaco.editor.ITextModel
   darkMode: boolean
   editorHeight: number
-  onChangeOriginal(value: string): void
-  onChangeModified(value: string): void
   onClearOriginal(): void
   onClearModified(): void
   mode: 'editors' | 'diff'
@@ -20,21 +17,11 @@ type MonacoEditorsProps = {
   className?: string
 }
 
-const toMonacoLanguage = (lang: string) => {
-  if (!lang || lang === 'auto' || lang === 'plaintext') return 'plaintext'
-  if (lang === 'dockerfile') return 'dockerfile'
-  if (lang === 'csharp') return 'csharp'
-  return lang
-}
-
 export function MonacoEditors({
-  original,
-  modified,
-  language,
+  originalModel,
+  modifiedModel,
   darkMode,
   editorHeight,
-  onChangeOriginal,
-  onChangeModified,
   onClearOriginal,
   onClearModified,
   mode,
@@ -48,17 +35,49 @@ export function MonacoEditors({
   const modifiedEl = useRef<HTMLDivElement | null>(null)
   const diffEl = useRef<HTMLDivElement | null>(null)
 
-  const monacoLang = useMemo(() => toMonacoLanguage(language), [language])
-
   // Drag states for file upload
   const [originalDragOver, setOriginalDragOver] = useState(false)
   const [modifiedDragOver, setModifiedDragOver] = useState(false)
 
-  // Text statistics
-  const originalStats = useMemo<TextStats>(() => getTextStats(original), [original])
-  const modifiedStats = useMemo<TextStats>(() => getTextStats(modified), [modified])
+  // Debounced text statistics — update 300ms after last model change
+  const [originalStats, setOriginalStats] = useState<TextStats>({ chars: 0, words: 0 })
+  const [modifiedStats, setModifiedStats] = useState<TextStats>({ chars: 0, words: 0 })
+  const originalStatsTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const modifiedStatsTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const isEmpty = useMemo(() => !original && !modified, [original, modified])
+  useEffect(() => {
+    // Initialize stats (guard against disposed models in Strict Mode)
+    if (!originalModel.isDisposed()) setOriginalStats(getTextStats(originalModel.getValue()))
+    if (!modifiedModel.isDisposed()) setModifiedStats(getTextStats(modifiedModel.getValue()))
+
+    const d1 = originalModel.onDidChangeContent(() => {
+      if (originalStatsTimer.current) clearTimeout(originalStatsTimer.current)
+      originalStatsTimer.current = setTimeout(() => {
+        if (!originalModel.isDisposed()) setOriginalStats(getTextStats(originalModel.getValue()))
+      }, 300)
+    })
+    const d2 = modifiedModel.onDidChangeContent(() => {
+      if (modifiedStatsTimer.current) clearTimeout(modifiedStatsTimer.current)
+      modifiedStatsTimer.current = setTimeout(() => {
+        if (!modifiedModel.isDisposed()) setModifiedStats(getTextStats(modifiedModel.getValue()))
+      }, 300)
+    })
+
+    return () => {
+      d1.dispose()
+      d2.dispose()
+      if (originalStatsTimer.current) clearTimeout(originalStatsTimer.current)
+      if (modifiedStatsTimer.current) clearTimeout(modifiedStatsTimer.current)
+    }
+  }, [originalModel, modifiedModel])
+
+  const isEmpty = useMemo(
+    () => originalModel.getValueLength() === 0 && modifiedModel.getValueLength() === 0,
+    // We deliberately keep originalStats/modifiedStats as deps so isEmpty re-evaluates
+    // after debounced stats update (which means content changed).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [originalModel, modifiedModel, originalStats, modifiedStats]
+  )
 
   // Copy text to clipboard
   const copyToClipboard = useCallback(async (text: string) => {
@@ -69,10 +88,10 @@ export function MonacoEditors({
     }
   }, [])
 
-  // Handle file drop
+  // Handle file drop — set model value directly
   const handleFileDrop = useCallback((
     e: React.DragEvent<HTMLDivElement>,
-    setContent: (value: string) => void,
+    model: monaco.editor.ITextModel,
     setDragOver: (value: boolean) => void
   ) => {
     e.preventDefault()
@@ -83,7 +102,6 @@ export function MonacoEditors({
     if (files.length === 0) return
 
     const file = files[0]
-    // Only accept text files
     if (!file.type.startsWith('text/') && !file.name.match(/\.(txt|md|json|js|ts|tsx|jsx|py|java|c|cpp|h|hpp|css|html|xml|yaml|yml|sh|go|rs|rb|php|swift|kt|sql|dockerfile)$/i)) {
       console.warn('File type not supported for text parsing')
       return
@@ -93,7 +111,7 @@ export function MonacoEditors({
     reader.onload = (event) => {
       const text = event.target?.result as string
       if (text) {
-        setContent(text)
+        model.setValue(text)
       }
     }
     reader.readAsText(file)
@@ -120,140 +138,98 @@ export function MonacoEditors({
   const modifiedEditorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
   const diffEditorRef = useRef<monaco.editor.IStandaloneDiffEditor | null>(null)
 
-  const originalModelRef = useRef<monaco.editor.ITextModel | null>(null)
-  const modifiedModelRef = useRef<monaco.editor.ITextModel | null>(null)
-  const diffOriginalModelRef = useRef<monaco.editor.ITextModel | null>(null)
-  const diffModifiedModelRef = useRef<monaco.editor.ITextModel | null>(null)
-
   const theme = useMemo(() => (darkMode ? 'vs-dark' : 'vs'), [darkMode])
 
-  // Initialize editors
+  const editorOptions: monaco.editor.IStandaloneEditorConstructionOptions = useMemo(() => ({
+    minimap: { enabled: false },
+    wordWrap: 'on' as const,
+    wrappingStrategy: 'advanced' as const,
+    scrollBeyondLastColumn: 0,
+    scrollBeyondLastLine: false,
+    automaticLayout: true,
+    fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace",
+    fontSize: 13,
+    lineHeight: 20,
+    fontLigatures: true,
+    padding: { top: 12, bottom: 12 },
+    renderLineHighlight: 'line' as const,
+    smoothScrolling: true,
+    cursorSmoothCaretAnimation: 'on' as const,
+    cursorBlinking: 'smooth' as const,
+  }), [])
+
+  // Initialize standalone editors — share the same models
   useEffect(() => {
-    if (mode === 'editors') {
-      if (!originalEl.current || !modifiedEl.current) return
+    if (mode !== 'editors') return
+    if (!originalEl.current || !modifiedEl.current) return
 
-      originalModelRef.current = monaco.editor.createModel(original, monacoLang)
-      modifiedModelRef.current = monaco.editor.createModel(modified, monacoLang)
+    originalEditorRef.current = monaco.editor.create(originalEl.current, {
+      model: originalModel,
+      theme,
+      ...editorOptions,
+    })
 
-      originalEditorRef.current = monaco.editor.create(originalEl.current, {
-        model: originalModelRef.current,
-        theme,
-        minimap: { enabled: false },
-        wordWrap: 'on',
-        wrappingStrategy: 'advanced',
-        scrollBeyondLastColumn: 0,
-        scrollBeyondLastLine: false,
-        automaticLayout: true,
-        fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace",
-        fontSize: 13,
-        lineHeight: 20,
-        fontLigatures: true,
-        padding: { top: 12, bottom: 12 },
-        renderLineHighlight: 'line',
-        smoothScrolling: true,
-        cursorSmoothCaretAnimation: 'on',
-        cursorBlinking: 'smooth',
-      })
+    modifiedEditorRef.current = monaco.editor.create(modifiedEl.current, {
+      model: modifiedModel,
+      theme,
+      ...editorOptions,
+    })
 
-      modifiedEditorRef.current = monaco.editor.create(modifiedEl.current, {
-        model: modifiedModelRef.current,
-        theme,
-        minimap: { enabled: false },
-        wordWrap: 'on',
-        wrappingStrategy: 'advanced',
-        scrollBeyondLastColumn: 0,
-        scrollBeyondLastLine: false,
-        automaticLayout: true,
-        fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace",
-        fontSize: 13,
-        lineHeight: 20,
-        fontLigatures: true,
-        padding: { top: 12, bottom: 12 },
-        renderLineHighlight: 'line',
-        smoothScrolling: true,
-        cursorSmoothCaretAnimation: 'on',
-        cursorBlinking: 'smooth',
-      })
-
-      const d1 = originalModelRef.current.onDidChangeContent(() => {
-        onChangeOriginal(originalModelRef.current?.getValue() ?? '')
-      })
-      const d2 = modifiedModelRef.current.onDidChangeContent(() => {
-        onChangeModified(modifiedModelRef.current?.getValue() ?? '')
-      })
-
-      return () => {
-        d1.dispose()
-        d2.dispose()
-        originalEditorRef.current?.dispose()
-        modifiedEditorRef.current?.dispose()
-        originalModelRef.current?.dispose()
-        modifiedModelRef.current?.dispose()
-      }
+    return () => {
+      originalEditorRef.current?.dispose()
+      modifiedEditorRef.current?.dispose()
+      originalEditorRef.current = null
+      modifiedEditorRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode === 'editors'])
 
-  // Initialize diff editor
+  // Initialize diff editor — shares the SAME models as the standalone editors
   useEffect(() => {
-    if (mode === 'diff') {
-      if (!diffEl.current) return
+    if (mode !== 'diff') return
+    if (!diffEl.current) return
 
-      diffOriginalModelRef.current = monaco.editor.createModel(original, monacoLang)
-      diffModifiedModelRef.current = monaco.editor.createModel(modified, monacoLang)
+    diffEditorRef.current = monaco.editor.createDiffEditor(diffEl.current, {
+      theme,
+      ignoreTrimWhitespace: false,
+      renderSideBySide,
+      renderIndicators: true,
+      originalEditable: true,
+      readOnly: false,
+      enableSplitViewResizing: true,
+      automaticLayout: true,
+      scrollBeyondLastLine: false,
+      diffWordWrap: 'on',
+      diffAlgorithm: 'advanced',
+      scrollBeyondLastColumn: 0,
+      scrollbar: {
+        verticalScrollbarSize: 8,
+        horizontalScrollbarSize: 8,
+        horizontal: 'auto',
+        vertical: 'auto',
+      },
+      minimap: { enabled: false },
+      fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace",
+      fontSize: 13,
+      lineHeight: 20,
+      fontLigatures: true,
+      wrappingStrategy: 'advanced',
+      padding: { top: 12, bottom: 12 },
+      smoothScrolling: true,
+      renderLineHighlight: 'line',
+      cursorSmoothCaretAnimation: 'on',
+      cursorBlinking: 'smooth',
+    })
 
-      diffEditorRef.current = monaco.editor.createDiffEditor(diffEl.current, {
-        theme,
-        ignoreTrimWhitespace: false,
-        renderSideBySide,
-        renderIndicators: true,
-        originalEditable: true,
-        readOnly: false,
-        enableSplitViewResizing: true,
-        automaticLayout: true,
-        scrollBeyondLastLine: false,
-        diffWordWrap: 'on',
-        diffAlgorithm: 'advanced',
-        scrollBeyondLastColumn: 0,
-        scrollbar: {
-          verticalScrollbarSize: 8,
-          horizontalScrollbarSize: 8,
-          horizontal: 'auto',
-          vertical: 'auto',
-        },
-        minimap: { enabled: false },
-        fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace",
-        fontSize: 13,
-        lineHeight: 20,
-        fontLigatures: true,
-        wrappingStrategy: 'advanced',
-        padding: { top: 12, bottom: 12 },
-        smoothScrolling: true,
-        renderLineHighlight: 'line',
-        cursorSmoothCaretAnimation: 'on',
-        cursorBlinking: 'smooth',
-      })
+    // Use the SAME models — no need for separate diff models or sync
+    diffEditorRef.current.setModel({
+      original: originalModel,
+      modified: modifiedModel,
+    })
 
-      diffEditorRef.current.setModel({
-        original: diffOriginalModelRef.current,
-        modified: diffModifiedModelRef.current,
-      })
-
-      // Sync edits from diff editor back to parent state
-      const d1 = diffOriginalModelRef.current.onDidChangeContent(() => {
-        onChangeOriginal(diffOriginalModelRef.current?.getValue() ?? '')
-      })
-      const d2 = diffModifiedModelRef.current.onDidChangeContent(() => {
-        onChangeModified(diffModifiedModelRef.current?.getValue() ?? '')
-      })
-
-      return () => {
-        d1.dispose()
-        d2.dispose()
-        diffEditorRef.current?.dispose()
-        diffOriginalModelRef.current?.dispose()
-        diffModifiedModelRef.current?.dispose()
-      }
+    return () => {
+      diffEditorRef.current?.dispose()
+      diffEditorRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode === 'diff'])
@@ -270,44 +246,6 @@ export function MonacoEditors({
     monaco.editor.setTheme(theme)
   }, [theme])
 
-  // Keep language in sync
-  useEffect(() => {
-    const models = [
-      originalModelRef.current,
-      modifiedModelRef.current,
-      diffOriginalModelRef.current,
-      diffModifiedModelRef.current,
-    ]
-    for (const m of models) {
-      if (!m) continue
-      monaco.editor.setModelLanguage(m, monacoLang)
-    }
-  }, [monacoLang])
-
-  // Sync content for editors mode
-  useEffect(() => {
-    if (mode === 'editors') {
-      if (originalModelRef.current && originalModelRef.current.getValue() !== original) {
-        originalModelRef.current.setValue(original)
-      }
-      if (modifiedModelRef.current && modifiedModelRef.current.getValue() !== modified) {
-        modifiedModelRef.current.setValue(modified)
-      }
-    }
-  }, [original, modified, mode])
-
-  // Sync content for diff mode
-  useEffect(() => {
-    if (mode === 'diff' && !isEmpty) {
-      if (diffOriginalModelRef.current && diffOriginalModelRef.current.getValue() !== original) {
-        diffOriginalModelRef.current.setValue(original)
-      }
-      if (diffModifiedModelRef.current && diffModifiedModelRef.current.getValue() !== modified) {
-        diffModifiedModelRef.current.setValue(modified)
-      }
-    }
-  }, [original, modified, mode])
-
   if (mode === 'editors') {
     return (
       <div
@@ -320,7 +258,7 @@ export function MonacoEditors({
           onDragOver={handleDragOver}
           onDragEnter={handleDragEnter(setOriginalDragOver)}
           onDragLeave={handleDragLeave(setOriginalDragOver)}
-          onDrop={(e) => handleFileDrop(e, onChangeOriginal, setOriginalDragOver)}
+          onDrop={(e) => handleFileDrop(e, originalModel, setOriginalDragOver)}
         >
           <div className="editor-panel-header">
             <div className="flex items-center gap-2">
@@ -336,7 +274,7 @@ export function MonacoEditors({
             </div>
             <div className="flex items-center gap-1">
               <button
-                onClick={() => copyToClipboard(original)}
+                onClick={() => copyToClipboard(originalModel.getValue())}
                 className="p-1.5 rounded-lg text-surface-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-all duration-200"
                 title="Copy text"
               >
@@ -381,7 +319,7 @@ export function MonacoEditors({
           onDragOver={handleDragOver}
           onDragEnter={handleDragEnter(setModifiedDragOver)}
           onDragLeave={handleDragLeave(setModifiedDragOver)}
-          onDrop={(e) => handleFileDrop(e, onChangeModified, setModifiedDragOver)}
+          onDrop={(e) => handleFileDrop(e, modifiedModel, setModifiedDragOver)}
         >
           <div className="editor-panel-header">
             <div className="flex items-center gap-2">
@@ -397,7 +335,7 @@ export function MonacoEditors({
             </div>
             <div className="flex items-center gap-1">
               <button
-                onClick={() => copyToClipboard(modified)}
+                onClick={() => copyToClipboard(modifiedModel.getValue())}
                 className="p-1.5 rounded-lg text-surface-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-all duration-200"
                 title="Copy text"
               >
