@@ -128,7 +128,7 @@ export function Header({
         <button
           onClick={onSwap}
           className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-white dark:hover:bg-surface-700 text-surface-600 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 shadow-sm hover:shadow-md transition-all duration-300 active:scale-95 group border border-transparent hover:border-surface-200 dark:hover:border-surface-600"
-          title="Swap Content (Cmd+S)"
+          title="Swap Content"
         >
           <div className="p-1 rounded-lg bg-surface-200/50 dark:bg-surface-800 group-hover:bg-primary-500/10 transition-colors">
             <svg className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -142,7 +142,7 @@ export function Header({
         <button
           onClick={onClear}
           className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-white dark:hover:bg-surface-700 text-surface-600 dark:text-surface-300 hover:text-red-500 shadow-sm hover:shadow-md transition-all duration-300 active:scale-95 group border border-transparent hover:border-surface-200 dark:hover:border-surface-600"
-          title="Clear All (Cmd+E)"
+          title="Clear All"
         >
           <div className="p-1 rounded-lg bg-surface-200/50 dark:bg-surface-800 group-hover:bg-red-500/10 transition-colors">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

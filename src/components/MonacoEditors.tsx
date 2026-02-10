@@ -443,7 +443,7 @@ export function MonacoEditors({
                   ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border border-primary-200/50 dark:border-primary-800/50'
                   : 'bg-surface-100 dark:bg-surface-800 text-surface-500 dark:text-surface-400 border border-transparent'
               }`}
-              title={renderSideBySide ? 'Switch to Unified View (Cmd+U)' : 'Switch to Side-by-Side View (Cmd+U)'}
+              title={renderSideBySide ? 'Switch to Unified View' : 'Switch to Side-by-Side View'}
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {renderSideBySide ? (
@@ -475,7 +475,7 @@ export function MonacoEditors({
             <button
               onClick={onToggleFullscreen}
               className="p-1.5 rounded-lg text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-all duration-200"
-              title={isFullscreen ? 'Exit fullscreen (Cmd+F)' : 'Fullscreen (Cmd+F)'}
+              title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
             >
               {isFullscreen ? (
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -509,13 +509,13 @@ export function MonacoEditors({
                 Paste your code snippets above or drag and drop files to see the magic happen.
               </p>
             </div>
-            <div className="flex items-center gap-4 pt-2">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-100 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 text-[10px] font-bold text-surface-400 uppercase tracking-widest">
-                <span className="text-surface-900 dark:text-white px-1.5 py-0.5 rounded bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700">⌘+S</span>
+              <div className="flex items-center gap-4 pt-2">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-100 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 text-[10px] font-bold text-surface-400 uppercase tracking-widest">
+                <span className="text-surface-900 dark:text-white px-1.5 py-0.5 rounded bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700">Swap</span>
                 Swap
               </div>
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-100 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 text-[10px] font-bold text-surface-400 uppercase tracking-widest">
-                <span className="text-surface-900 dark:text-white px-1.5 py-0.5 rounded bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700">⌘+E</span>
+                <span className="text-surface-900 dark:text-white px-1.5 py-0.5 rounded bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700">Clear</span>
                 Clear
               </div>
             </div>

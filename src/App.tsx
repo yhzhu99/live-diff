@@ -222,29 +222,7 @@ export default function App() {
     setRenderSideBySide(prev => !prev)
   }, [])
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-        e.preventDefault()
-        handleSwap()
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'e') {
-        e.preventDefault()
-        handleClear()
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
-        e.preventDefault()
-        toggleFullscreen()
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'u') {
-        e.preventDefault()
-        toggleRenderSideBySide()
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleSwap, handleClear, toggleFullscreen, toggleRenderSideBySide])
+  // Intentionally no global keyboard shortcuts.
 
   return (
     <div className={`min-h-screen md:h-screen flex flex-col overflow-y-auto md:overflow-hidden ${darkMode ? 'bg-surface-950' : 'bg-surface-50'}`}>
