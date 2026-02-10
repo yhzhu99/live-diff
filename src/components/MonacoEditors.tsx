@@ -146,6 +146,46 @@ export function MonacoEditors({
   const theme = useMemo(() => (darkMode ? 'vs-dark' : 'vs'), [darkMode])
 
   const refreshScheduledRef = useRef(false)
+  const [isDiffUpdating, setIsDiffUpdating] = useState(false)
+  const diffUpdateTokenRef = useRef(0)
+  const showSpinnerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hideSpinnerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (mode !== 'diff') return
+
+    const schedule = () => {
+      // Each change bumps the token; only latest "wins".
+      const token = ++diffUpdateTokenRef.current
+
+      // Show loading only if diff isn't ready quickly (avoid flicker).
+      if (showSpinnerTimerRef.current) clearTimeout(showSpinnerTimerRef.current)
+      showSpinnerTimerRef.current = setTimeout(() => {
+        if (diffUpdateTokenRef.current !== token) return
+        setIsDiffUpdating(true)
+      }, 120)
+
+      // Hide loading after a short idle period following latest change.
+      if (hideSpinnerTimerRef.current) clearTimeout(hideSpinnerTimerRef.current)
+      hideSpinnerTimerRef.current = setTimeout(() => {
+        if (diffUpdateTokenRef.current !== token) return
+        setIsDiffUpdating(false)
+      }, 450)
+    }
+
+    // Prime on mount (helps after big paste / initial file load).
+    schedule()
+
+    const d1 = originalModel.onDidChangeContent(schedule)
+    const d2 = modifiedModel.onDidChangeContent(schedule)
+
+    return () => {
+      d1.dispose()
+      d2.dispose()
+      if (showSpinnerTimerRef.current) clearTimeout(showSpinnerTimerRef.current)
+      if (hideSpinnerTimerRef.current) clearTimeout(hideSpinnerTimerRef.current)
+    }
+  }, [mode, originalModel, modifiedModel])
 
   const ensureDiffEditorResponsive = useCallback(() => {
     if (mode !== 'diff') return
@@ -493,6 +533,16 @@ export function MonacoEditors({
 
       <div className="flex-1 relative min-h-0 bg-surface-50/30 dark:bg-surface-950/30">
         <div ref={diffEl} className={`absolute inset-0 ${isEmpty ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} />
+        {!isEmpty && isDiffUpdating && (
+          <div className="absolute left-0 right-0 top-0 z-20 flex items-center justify-center pointer-events-none">
+            <div className="mt-3 flex items-center gap-3 rounded-full bg-white/95 dark:bg-surface-900/95 border border-primary-200/70 dark:border-primary-700/60 px-4 py-2 shadow-md shadow-primary-500/10">
+              <div className="diff-loading-spinner diff-loading-spinner--lg" />
+              <span className="text-[13px] font-bold text-primary-700 dark:text-primary-300 tracking-wide">
+                Updating diff…
+              </span>
+            </div>
+          </div>
+        )}
         {isEmpty && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 animate-fade-in">
             <div className="relative">

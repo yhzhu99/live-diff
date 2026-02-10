@@ -148,6 +148,27 @@ body {
   @apply transition-all duration-300;
 }
 
+.diff-loading-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  border: 2px solid rgba(148, 163, 184, 0.35);
+  border-top-color: rgba(59, 130, 246, 0.9);
+  animation: diff-loading-spin 0.8s linear infinite;
+}
+
+.diff-loading-spinner--lg {
+  width: 18px;
+  height: 18px;
+  border-width: 2.5px;
+}
+
+@keyframes diff-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .diff-panel:hover {
   @apply shadow-lg shadow-surface-900/5 dark:shadow-black/20;
 }
