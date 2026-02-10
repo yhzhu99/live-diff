@@ -207,8 +207,8 @@ export function MonacoEditors({
         ignoreTrimWhitespace: false,
         renderSideBySide,
         renderIndicators: true,
-        originalEditable: false,
-        readOnly: true,
+        originalEditable: true,
+        readOnly: false,
         enableSplitViewResizing: true,
         automaticLayout: true,
         scrollBeyondLastLine: false,
@@ -229,6 +229,9 @@ export function MonacoEditors({
         wrappingStrategy: 'advanced',
         padding: { top: 12, bottom: 12 },
         smoothScrolling: true,
+        renderLineHighlight: 'line',
+        cursorSmoothCaretAnimation: 'on',
+        cursorBlinking: 'smooth',
       })
 
       diffEditorRef.current.setModel({
@@ -236,7 +239,17 @@ export function MonacoEditors({
         modified: diffModifiedModelRef.current,
       })
 
+      // Sync edits from diff editor back to parent state
+      const d1 = diffOriginalModelRef.current.onDidChangeContent(() => {
+        onChangeOriginal(diffOriginalModelRef.current?.getValue() ?? '')
+      })
+      const d2 = diffModifiedModelRef.current.onDidChangeContent(() => {
+        onChangeModified(diffModifiedModelRef.current?.getValue() ?? '')
+      })
+
       return () => {
+        d1.dispose()
+        d2.dispose()
         diffEditorRef.current?.dispose()
         diffOriginalModelRef.current?.dispose()
         diffModifiedModelRef.current?.dispose()
@@ -436,7 +449,7 @@ export function MonacoEditors({
             <div className="w-1.5 h-1.5 rounded-full bg-primary-300 opacity-40 group-hover:opacity-100 transition-opacity" />
           </div>
           <span className="text-xs font-bold uppercase tracking-widest text-surface-500 dark:text-surface-400">
-            Diff Preview
+            Live Diff
           </span>
         </div>
 
