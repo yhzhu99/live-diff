@@ -2,6 +2,11 @@ import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import * as monaco from 'monaco-editor'
 import { getTextStats, TextStats } from '../utils/textStats'
 
+function scheduleMicrotask(fn: () => void) {
+  if (typeof queueMicrotask === 'function') queueMicrotask(fn)
+  else Promise.resolve().then(fn)
+}
+
 type MonacoEditorsProps = {
   originalModel: monaco.editor.ITextModel
   modifiedModel: monaco.editor.ITextModel
@@ -140,6 +145,36 @@ export function MonacoEditors({
 
   const theme = useMemo(() => (darkMode ? 'vs-dark' : 'vs'), [darkMode])
 
+  const refreshScheduledRef = useRef(false)
+
+  const ensureDiffEditorResponsive = useCallback(() => {
+    if (mode !== 'diff') return
+    const diffEditor = diffEditorRef.current
+    if (!diffEditor) return
+    if (refreshScheduledRef.current) return
+    refreshScheduledRef.current = true
+
+    // Monaco sometimes stops updating diffs after a long task / cancellation.
+    // As a defensive measure, re-attach the model on the next microtask.
+    scheduleMicrotask(() => {
+      refreshScheduledRef.current = false
+      if (diffEditorRef.current !== diffEditor) return
+      if (originalModel.isDisposed() || modifiedModel.isDisposed()) return
+
+      try {
+        const current = diffEditor.getModel()
+        if (!current || current.original !== originalModel || current.modified !== modifiedModel) {
+          diffEditor.setModel({ original: originalModel, modified: modifiedModel })
+        } else {
+          diffEditor.setModel(null as unknown as monaco.editor.IDiffEditorModel)
+          diffEditor.setModel({ original: originalModel, modified: modifiedModel })
+        }
+      } catch (err) {
+        console.warn('[live-diff] diff refresh failed; recreating editor', err)
+      }
+    })
+  }, [mode, originalModel, modifiedModel])
+
   const editorOptions: monaco.editor.IStandaloneEditorConstructionOptions = useMemo(() => ({
     minimap: { enabled: false },
     wordWrap: 'on' as const,
@@ -238,8 +273,15 @@ export function MonacoEditors({
   useEffect(() => {
     if (mode === 'diff' && diffEditorRef.current) {
       diffEditorRef.current.updateOptions({ renderSideBySide })
+      ensureDiffEditorResponsive()
     }
-  }, [mode, renderSideBySide])
+  }, [mode, renderSideBySide, ensureDiffEditorResponsive])
+
+  // Defensive: re-attach models when switching into diff mode.
+  useEffect(() => {
+    if (mode !== 'diff') return
+    ensureDiffEditorResponsive()
+  }, [mode, ensureDiffEditorResponsive])
 
   // Keep theme in sync
   useEffect(() => {
