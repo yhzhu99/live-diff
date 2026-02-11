@@ -43,6 +43,7 @@ export function MonacoEditors({
   // Drag states for file upload
   const [originalDragOver, setOriginalDragOver] = useState(false)
   const [modifiedDragOver, setModifiedDragOver] = useState(false)
+  const dragCounterRef = useRef({ original: 0, modified: 0 })
 
   // Debounced text statistics — update 300ms after last model change
   const [originalStats, setOriginalStats] = useState<TextStats>({ chars: 0, words: 0 })
@@ -127,16 +128,24 @@ export function MonacoEditors({
     e.stopPropagation()
   }, [])
 
-  const handleDragEnter = useCallback((setDragOver: (value: boolean) => void) => (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragEnter = useCallback((
+    side: 'original' | 'modified',
+    setDragOver: (value: boolean) => void
+  ) => (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
+    dragCounterRef.current[side] += 1
     setDragOver(true)
   }, [])
 
-  const handleDragLeave = useCallback((setDragOver: (value: boolean) => void) => (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragLeave = useCallback((
+    side: 'original' | 'modified',
+    setDragOver: (value: boolean) => void
+  ) => (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    setDragOver(false)
+    dragCounterRef.current[side] = Math.max(0, dragCounterRef.current[side] - 1)
+    if (dragCounterRef.current[side] === 0) setDragOver(false)
   }, [])
 
   const originalEditorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
@@ -362,9 +371,12 @@ export function MonacoEditors({
         <div
           className={`editor-panel group relative h-[300px] lg:h-full ${originalDragOver ? 'ring-2 ring-primary-500 ring-inset' : ''}`}
           onDragOver={handleDragOver}
-          onDragEnter={handleDragEnter(setOriginalDragOver)}
-          onDragLeave={handleDragLeave(setOriginalDragOver)}
-          onDrop={(e) => handleFileDrop(e, originalModel, setOriginalDragOver)}
+          onDragEnter={handleDragEnter('original', setOriginalDragOver)}
+          onDragLeave={handleDragLeave('original', setOriginalDragOver)}
+          onDrop={(e) => {
+            dragCounterRef.current.original = 0
+            handleFileDrop(e, originalModel, setOriginalDragOver)
+          }}
         >
           <div className="editor-panel-header">
             <div className="flex items-center gap-2">
@@ -423,9 +435,12 @@ export function MonacoEditors({
         <div
           className={`editor-panel group relative h-[300px] lg:h-full ${modifiedDragOver ? 'ring-2 ring-primary-500 ring-inset' : ''}`}
           onDragOver={handleDragOver}
-          onDragEnter={handleDragEnter(setModifiedDragOver)}
-          onDragLeave={handleDragLeave(setModifiedDragOver)}
-          onDrop={(e) => handleFileDrop(e, modifiedModel, setModifiedDragOver)}
+          onDragEnter={handleDragEnter('modified', setModifiedDragOver)}
+          onDragLeave={handleDragLeave('modified', setModifiedDragOver)}
+          onDrop={(e) => {
+            dragCounterRef.current.modified = 0
+            handleFileDrop(e, modifiedModel, setModifiedDragOver)
+          }}
         >
           <div className="editor-panel-header">
             <div className="flex items-center gap-2">
