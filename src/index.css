@@ -163,6 +163,23 @@ body {
   border-width: 2.5px;
 }
 
+.diff-loading-toast {
+  @apply absolute top-3 right-3 z-20 pointer-events-none;
+  @apply flex items-center gap-2.5;
+  @apply rounded-full;
+  @apply bg-white/95 dark:bg-surface-900/95;
+  @apply border border-primary-200/70 dark:border-primary-700/60;
+  @apply px-3 py-1.5;
+  @apply shadow-md shadow-primary-500/10;
+  @apply backdrop-blur-xs;
+}
+
+.diff-loading-toast__text {
+  @apply text-[12px] font-bold;
+  @apply text-primary-700 dark:text-primary-300;
+  @apply tracking-wide;
+}
+
 @keyframes diff-loading-spin {
   to {
     transform: rotate(360deg);

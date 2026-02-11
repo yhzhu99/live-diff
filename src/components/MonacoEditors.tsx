@@ -150,27 +150,51 @@ export function MonacoEditors({
   const diffUpdateTokenRef = useRef(0)
   const showSpinnerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hideSpinnerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const visibleSinceRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (mode !== 'diff') return
+    const DEBOUNCE_MS = 300
+    const IDLE_HIDE_MS = 450
+    const MIN_VISIBLE_MS = 150
 
     const schedule = () => {
       // Each change bumps the token; only latest "wins".
       const token = ++diffUpdateTokenRef.current
 
-      // Show loading only if diff isn't ready quickly (avoid flicker).
+      // Show loading only after a brief pause in typing (avoid obstructing UX).
       if (showSpinnerTimerRef.current) clearTimeout(showSpinnerTimerRef.current)
       showSpinnerTimerRef.current = setTimeout(() => {
         if (diffUpdateTokenRef.current !== token) return
         setIsDiffUpdating(true)
-      }, 120)
+        visibleSinceRef.current = performance.now()
+      }, DEBOUNCE_MS)
 
-      // Hide loading after a short idle period following latest change.
+      // Hide loading after a short idle period following the latest change.
       if (hideSpinnerTimerRef.current) clearTimeout(hideSpinnerTimerRef.current)
       hideSpinnerTimerRef.current = setTimeout(() => {
         if (diffUpdateTokenRef.current !== token) return
-        setIsDiffUpdating(false)
-      }, 450)
+        const hide = () => {
+          if (diffUpdateTokenRef.current !== token) return
+          setIsDiffUpdating(false)
+          visibleSinceRef.current = null
+        }
+
+        const visibleSince = visibleSinceRef.current
+        if (visibleSince == null) {
+          hide()
+          return
+        }
+
+        const elapsed = performance.now() - visibleSince
+        if (elapsed >= MIN_VISIBLE_MS) {
+          hide()
+          return
+        }
+
+        // Ensure a minimum visible duration to avoid flicker.
+        setTimeout(hide, MIN_VISIBLE_MS - elapsed)
+      }, DEBOUNCE_MS + IDLE_HIDE_MS)
     }
 
     // Prime on mount (helps after big paste / initial file load).
@@ -534,13 +558,9 @@ export function MonacoEditors({
       <div className="flex-1 relative min-h-0 bg-surface-50/30 dark:bg-surface-950/30">
         <div ref={diffEl} className={`absolute inset-0 ${isEmpty ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} />
         {!isEmpty && isDiffUpdating && (
-          <div className="absolute left-0 right-0 top-0 z-20 flex items-center justify-center pointer-events-none">
-            <div className="mt-3 flex items-center gap-3 rounded-full bg-white/95 dark:bg-surface-900/95 border border-primary-200/70 dark:border-primary-700/60 px-4 py-2 shadow-md shadow-primary-500/10">
-              <div className="diff-loading-spinner diff-loading-spinner--lg" />
-              <span className="text-[13px] font-bold text-primary-700 dark:text-primary-300 tracking-wide">
-                Updating diff…
-              </span>
-            </div>
+          <div className="diff-loading-toast">
+            <div className="diff-loading-spinner diff-loading-spinner--lg" />
+            <span className="diff-loading-toast__text">Updating diff…</span>
           </div>
         )}
         {isEmpty && (
