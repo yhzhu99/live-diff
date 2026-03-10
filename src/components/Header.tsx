@@ -1,15 +1,20 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
+import type { HistorySnapshot } from '../utils/persistence'
 
 interface HeaderProps {
   darkMode: boolean
   onToggleDarkMode: () => void
-  // Language controls
   language: string
   detectedLanguage: string
   languages: { value: string; label: string }[]
   onLanguageChange: (lang: string) => void
-  // Actions
   onSwap: () => void
+  onSave: () => void
+  saveStatus: 'idle' | 'saving' | 'saved'
+  isSaveDisabled: boolean
+  historyItems: HistorySnapshot[]
+  isHistoryLoading: boolean
+  onSelectHistory: (snapshotId: string) => void
   onClear: () => void
 }
 
@@ -21,36 +26,55 @@ export function Header({
   languages,
   onLanguageChange,
   onSwap,
+  onSave,
+  saveStatus,
+  isSaveDisabled,
+  historyItems,
+  isHistoryLoading,
+  onSelectHistory,
   onClear,
 }: HeaderProps) {
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+  const languageDropdownRef = useRef<HTMLDivElement>(null)
+  const historyDropdownRef = useRef<HTMLDivElement>(null)
 
   const allLanguages = [{ value: 'auto', label: 'Auto ✨' }, ...languages]
-  const currentLanguageLabel = allLanguages.find(l => l.value === language)?.label || language
-  const detectedLabel = languages.find(l => l.value === detectedLanguage)?.label || detectedLanguage
+  const currentLanguageLabel = allLanguages.find(item => item.value === language)?.label || language
+  const detectedLabel = languages.find(item => item.value === detectedLanguage)?.label || detectedLanguage
+  const saveLabel = saveStatus === 'saving' ? 'Saving' : saveStatus === 'saved' ? 'Saved' : 'Save'
+  const savedAtFormatter = useMemo(
+    () => new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }),
+    []
+  )
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node
+
+      if (languageDropdownRef.current && !languageDropdownRef.current.contains(target)) {
         setIsLanguageOpen(false)
       }
+
+      if (historyDropdownRef.current && !historyDropdownRef.current.contains(target)) {
+        setIsHistoryOpen(false)
+      }
     }
+
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   return (
-    <header className="flex items-center justify-between px-3 md:px-5 py-3 border-b border-surface-200/80 dark:border-surface-800/80 bg-white/80 dark:bg-surface-900/80 backdrop-blur-xl sticky top-0 z-50 overflow-x-auto md:overflow-visible no-scrollbar">
-      {/* Logo */}
-      <div className="flex items-center gap-3 select-none">
+    <header className="flex items-center justify-between px-3 md:px-5 py-3 border-b border-surface-200/80 dark:border-surface-800/80 bg-white/80 dark:bg-surface-900/80 backdrop-blur-xl sticky top-0 z-50 overflow-x-auto md:overflow-visible no-scrollbar gap-3">
+      <div className="flex items-center gap-3 select-none shrink-0">
         <div className="relative group cursor-pointer" onClick={() => window.location.reload()}>
           <div className="absolute -inset-1 bg-gradient-to-r from-primary-500 to-emerald-500 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
           <div className="relative w-10 h-10 rounded-xl bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 flex items-center justify-center overflow-hidden shadow-sm group-active:scale-95 transition-transform">
             <img src="/logo.svg" alt="Live Diff Logo" className="w-7 h-7 group-hover:rotate-12 transition-transform duration-500" />
           </div>
         </div>
-        <div className="flex flex-col hidden sm:flex">
+        <div className="flex-col hidden sm:flex">
           <h1 className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-surface-900 via-primary-600 to-emerald-600 dark:from-white dark:via-primary-400 dark:to-emerald-400 bg-clip-text text-transparent leading-tight">
             Live Diff
           </h1>
@@ -60,23 +84,24 @@ export function Header({
         </div>
       </div>
 
-      {/* Center Controls */}
-      <div className="flex items-center gap-3 bg-surface-100/50 dark:bg-surface-800/50 p-1 rounded-2xl border border-surface-200/50 dark:border-surface-700/50">
-        {/* Language Selector */}
-        <div className="relative shrink-0" ref={dropdownRef}>
+      <div className="flex items-center gap-2 bg-surface-100/50 dark:bg-surface-800/50 p-1 rounded-2xl border border-surface-200/50 dark:border-surface-700/50 shrink-0">
+        <div className="relative shrink-0" ref={languageDropdownRef}>
           <button
-            onClick={() => setIsLanguageOpen(!isLanguageOpen)}
+            onClick={() => {
+              setIsLanguageOpen(current => !current)
+              setIsHistoryOpen(false)
+            }}
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-white dark:hover:bg-surface-700 shadow-sm hover:shadow-md transition-all duration-300 min-w-[120px] sm:min-w-[160px] text-left group border border-transparent hover:border-surface-200 dark:hover:border-surface-600"
           >
             <div className="flex-1 min-w-0">
               <div className="text-[10px] font-bold text-surface-400 dark:text-surface-500 uppercase tracking-wider leading-none mb-0.5 hidden sm:block">Language</div>
-              <div className="text-sm font-bold text-surface-700 dark:text-surface-200 truncate pr-4 sm:pr-4">
+              <div className="text-sm font-bold text-surface-700 dark:text-surface-200 truncate pr-4">
                 {currentLanguageLabel}
               </div>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
               {language === 'auto' && detectedLanguage !== 'plaintext' && (
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-primary-500 text-white shadow-sm shadow-primary-500/20 animate-fade-in whitespace-nowrap">
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-primary-500 text-white shadow-sm shadow-primary-500/20 whitespace-nowrap">
                   {detectedLabel}
                 </span>
               )}
@@ -92,25 +117,25 @@ export function Header({
           </button>
 
           {isLanguageOpen && (
-            <div className="absolute top-full left-0 mt-2 py-2 bg-white/95 dark:bg-surface-900/95 backdrop-blur-xl border border-surface-200/80 dark:border-surface-700/80 rounded-2xl shadow-2xl shadow-surface-900/10 dark:shadow-black/30 z-50 animate-slide-up w-[240px] max-h-[400px] overflow-auto">
+            <div className="absolute top-full left-0 mt-2 py-2 bg-white/95 dark:bg-surface-900/95 backdrop-blur-xl border border-surface-200/80 dark:border-surface-700/80 rounded-2xl shadow-2xl shadow-surface-900/10 dark:shadow-black/30 z-50 w-[240px] max-h-[400px] overflow-auto">
               <div className="px-3 py-1.5 mb-1 border-b border-surface-100 dark:border-surface-800">
                 <span className="text-[10px] font-bold text-surface-400 dark:text-surface-500 uppercase tracking-widest">Select Language</span>
               </div>
-              {allLanguages.map((lang) => (
+              {allLanguages.map((item) => (
                 <button
-                  key={lang.value}
+                  key={item.value}
                   onClick={() => {
-                    onLanguageChange(lang.value)
+                    onLanguageChange(item.value)
                     setIsLanguageOpen(false)
                   }}
                   className={`w-full text-left px-4 py-2 text-sm transition-all duration-200 flex items-center justify-between ${
-                    language === lang.value
+                    language === item.value
                       ? 'bg-primary-500 text-white font-bold'
                       : 'text-surface-600 dark:text-surface-400 hover:bg-surface-50 dark:hover:bg-surface-800/80'
                   }`}
                 >
-                  <span>{lang.label}</span>
-                  {language === lang.value && (
+                  <span>{item.label}</span>
+                  {language === item.value && (
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                     </svg>
@@ -121,14 +146,100 @@ export function Header({
           )}
         </div>
 
-        {/* Divider */}
+        <div className="relative shrink-0" ref={historyDropdownRef}>
+          <button
+            onClick={() => {
+              setIsHistoryOpen(current => !current)
+              setIsLanguageOpen(false)
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-white dark:hover:bg-surface-700 shadow-sm hover:shadow-md transition-all duration-300 min-w-[132px] sm:min-w-[180px] text-left border border-transparent hover:border-surface-200 dark:hover:border-surface-600"
+            title="Restore a saved diff"
+          >
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] font-bold text-surface-400 dark:text-surface-500 uppercase tracking-wider leading-none mb-0.5 hidden sm:block">History</div>
+              <div className="text-sm font-bold text-surface-700 dark:text-surface-200 truncate">
+                {isHistoryLoading ? 'Loading saved diffs' : historyItems.length > 0 ? `${historyItems.length} saved diff${historyItems.length > 1 ? 's' : ''}` : 'No saved diffs'}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {historyItems.length > 0 && !isHistoryLoading && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500 text-white shadow-sm shadow-emerald-500/20 whitespace-nowrap">
+                  {historyItems.length}
+                </span>
+              )}
+              <svg
+                className={`w-4 h-4 text-surface-400 transition-transform duration-300 ${isHistoryOpen ? 'rotate-180' : ''}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </button>
+
+          {isHistoryOpen && (
+            <div className="absolute top-full left-0 mt-2 bg-white/95 dark:bg-surface-900/95 backdrop-blur-xl border border-surface-200/80 dark:border-surface-700/80 rounded-2xl shadow-2xl shadow-surface-900/10 dark:shadow-black/30 z-50 w-[320px] max-w-[calc(100vw-2rem)] max-h-[420px] overflow-hidden">
+              <div className="px-4 py-3 border-b border-surface-100 dark:border-surface-800 flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] font-bold text-surface-400 dark:text-surface-500 uppercase tracking-widest">Saved History</div>
+                  <div className="text-sm font-semibold text-surface-700 dark:text-surface-200 mt-1">Restore a previous diff</div>
+                </div>
+                {isHistoryLoading && (
+                  <div className="diff-loading-spinner" aria-hidden="true" />
+                )}
+              </div>
+
+              <div className="max-h-[340px] overflow-auto p-2">
+                {isHistoryLoading ? (
+                  <div className="px-3 py-8 text-center text-sm text-surface-500 dark:text-surface-400">
+                    Loading history…
+                  </div>
+                ) : historyItems.length === 0 ? (
+                  <div className="px-3 py-8 text-center">
+                    <div className="w-12 h-12 rounded-2xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-6 h-6 text-surface-400 dark:text-surface-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <p className="text-sm font-semibold text-surface-700 dark:text-surface-200">No saved history yet</p>
+                    <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">Use SAVE to keep a diff you want to revisit.</p>
+                  </div>
+                ) : (
+                  historyItems.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        onSelectHistory(item.id)
+                        setIsHistoryOpen(false)
+                      }}
+                      className="w-full text-left p-3 rounded-2xl hover:bg-surface-50 dark:hover:bg-surface-800/80 transition-all duration-200 border border-transparent hover:border-surface-200 dark:hover:border-surface-700 mb-2 last:mb-0"
+                    >
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400">
+                        {savedAtFormatter.format(new Date(item.savedAt))}
+                      </div>
+                      <div className="mt-2 space-y-1">
+                        <div className="text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wide">Original</div>
+                        <div className="text-sm text-surface-700 dark:text-surface-200 truncate">{item.summaryOriginal}</div>
+                      </div>
+                      <div className="mt-2 space-y-1">
+                        <div className="text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wide">Modified</div>
+                        <div className="text-sm text-surface-700 dark:text-surface-200 truncate">{item.summaryModified}</div>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="w-px h-6 bg-surface-200 dark:bg-surface-700" />
 
-        {/* Swap Button */}
         <button
           onClick={onSwap}
           className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-white dark:hover:bg-surface-700 text-surface-600 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 shadow-sm hover:shadow-md transition-all duration-300 active:scale-95 group border border-transparent hover:border-surface-200 dark:hover:border-surface-600"
-          title="Swap Content"
+          title="Swap content"
         >
           <div className="p-1 rounded-lg bg-surface-200/50 dark:bg-surface-800 group-hover:bg-primary-500/10 transition-colors">
             <svg className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -138,11 +249,41 @@ export function Header({
           <span className="hidden sm:block text-xs font-bold uppercase tracking-wider">Swap</span>
         </button>
 
-        {/* Clear Button */}
+        <button
+          onClick={onSave}
+          disabled={isSaveDisabled || saveStatus === 'saving'}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-sm transition-all duration-300 active:scale-95 group border ${
+            isSaveDisabled
+              ? 'cursor-not-allowed border-transparent text-surface-400 dark:text-surface-500 bg-transparent'
+              : 'border-transparent hover:border-surface-200 dark:hover:border-surface-600 hover:bg-white dark:hover:bg-surface-700 text-surface-600 dark:text-surface-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:shadow-md'
+          }`}
+          title="Save current diff to history"
+        >
+          <div className={`p-1 rounded-lg transition-colors ${
+            isSaveDisabled
+              ? 'bg-surface-200/50 dark:bg-surface-800'
+              : 'bg-surface-200/50 dark:bg-surface-800 group-hover:bg-emerald-500/10'
+          }`}>
+            {saveStatus === 'saving' ? (
+              <div className="diff-loading-spinner" aria-hidden="true" />
+            ) : saveStatus === 'saved' ? (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5h14v14H5z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5v5h8V5m-6 9h4" />
+              </svg>
+            )}
+          </div>
+          <span className="hidden sm:block text-xs font-bold uppercase tracking-wider">{saveLabel}</span>
+        </button>
+
         <button
           onClick={onClear}
           className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-white dark:hover:bg-surface-700 text-surface-600 dark:text-surface-300 hover:text-red-500 shadow-sm hover:shadow-md transition-all duration-300 active:scale-95 group border border-transparent hover:border-surface-200 dark:hover:border-surface-600"
-          title="Clear All"
+          title="Clear current diff"
         >
           <div className="p-1 rounded-lg bg-surface-200/50 dark:bg-surface-800 group-hover:bg-red-500/10 transition-colors">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -153,8 +294,7 @@ export function Header({
         </button>
       </div>
 
-      {/* Right Controls */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 shrink-0">
         <a
           href="https://github.com/yhzhu99/live-diff"
           target="_blank"
@@ -171,7 +311,6 @@ export function Header({
           </div>
         </a>
 
-        {/* Dark mode toggle */}
         <button
           onClick={onToggleDarkMode}
           className="relative w-11 h-11 flex items-center justify-center rounded-xl bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:text-primary-600 dark:hover:text-amber-400 hover:shadow-lg transition-all duration-300 group overflow-hidden"
