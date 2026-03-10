@@ -109,6 +109,13 @@ export function Header({
   const allLanguages = [{ value: 'auto', label: 'Auto ✨' }, ...languages]
   const currentLanguageLabel = allLanguages.find(item => item.value === language)?.label || language
   const detectedLabel = languages.find(item => item.value === detectedLanguage)?.label || detectedLanguage
+  const isAutoLanguage = language === 'auto'
+  const compactLanguageMetaLabel = isAutoLanguage ? 'Auto' : 'Language'
+  const compactLanguageLabel = isAutoLanguage
+    ? detectedLanguage !== 'plaintext'
+      ? detectedLabel
+      : 'Plain Text'
+    : currentLanguageLabel
   const saveLabel = saveStatus === 'saving' ? 'Saving' : saveStatus === 'saved' ? 'Saved' : 'Save'
   const savedAtFormatter = useMemo(
     () => new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }),
@@ -188,20 +195,22 @@ export function Header({
           <div className="relative shrink-0">
             <button
               onClick={() => setIsLanguageOpen(current => !current)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-white dark:hover:bg-surface-700 shadow-sm hover:shadow-md transition-all duration-300 min-w-[120px] sm:min-w-[160px] text-left group border border-transparent hover:border-surface-200 dark:hover:border-surface-600"
+              className="flex items-center gap-2 px-3 py-1.5 h-11 rounded-xl hover:bg-white dark:hover:bg-surface-700 shadow-sm hover:shadow-md transition-all duration-300 w-[136px] sm:w-[156px] text-left group border border-transparent hover:border-surface-200 dark:hover:border-surface-600"
+              title={isAutoLanguage && detectedLanguage !== 'plaintext' ? `Language: Auto (${detectedLabel})` : 'Select language'}
             >
-              <div className="flex-1 min-w-0">
-                <div className="text-[10px] font-bold text-surface-400 dark:text-surface-500 uppercase tracking-wider leading-none mb-0.5 hidden sm:block">Language</div>
-                <div className="text-sm font-bold text-surface-700 dark:text-surface-200 truncate pr-4">
-                  {currentLanguageLabel}
+              <div className="min-w-0 flex-1">
+                <div className={`text-[9px] font-bold uppercase tracking-[0.14em] leading-none ${
+                  isAutoLanguage
+                    ? 'text-primary-600 dark:text-primary-400'
+                    : 'text-surface-400 dark:text-surface-500'
+                }`}>
+                  {compactLanguageMetaLabel}
+                </div>
+                <div className="mt-0.5 text-sm font-bold text-surface-700 dark:text-surface-200 truncate leading-tight">
+                  {compactLanguageLabel}
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {language === 'auto' && detectedLanguage !== 'plaintext' && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-primary-500 text-white shadow-sm shadow-primary-500/20 whitespace-nowrap">
-                    {detectedLabel}
-                  </span>
-                )}
+              <div className="shrink-0">
                 <svg
                   className={`w-4 h-4 text-surface-400 transition-transform duration-300 ${isLanguageOpen ? 'rotate-180' : ''}`}
                   fill="none"
