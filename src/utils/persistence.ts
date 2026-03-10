@@ -344,6 +344,23 @@ export async function loadHistoryItem(id: string) {
   }
 }
 
+export async function deleteHistorySnapshot(id: string) {
+  try {
+    await withDatabase(async (database) => {
+      const transaction = database.transaction(HISTORY_STORE, 'readwrite')
+      transaction.objectStore(HISTORY_STORE).delete(id)
+      await transactionToPromise(transaction)
+    })
+
+    const history = await listHistory()
+    return history
+  } catch {
+    const nextHistory = getHistoryFallback().filter(item => item.id !== id)
+    setHistoryFallback(nextHistory)
+    return nextHistory
+  }
+}
+
 export async function saveHistorySnapshot(payload: PersistedDiffState) {
   const snapshot = createSnapshot(payload)
 

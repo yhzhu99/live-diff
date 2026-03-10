@@ -4,6 +4,7 @@ import hljs from 'highlight.js'
 import { Header } from './components/Header'
 import { MonacoEditors } from './components/MonacoEditors'
 import {
+  deleteHistorySnapshot,
   getCachedWorkspaceDraft,
   listHistory,
   loadHistoryItem,
@@ -438,6 +439,16 @@ export default function App() {
     void persistWorkspaceNow(snapshot)
   }, [applyWorkspace, historyItems, persistWorkspaceNow])
 
+  const handleDeleteHistory = useCallback(async (snapshotId: string) => {
+    try {
+      const nextHistory = await deleteHistorySnapshot(snapshotId)
+      setHistoryItems(nextHistory)
+    } catch (error) {
+      console.error('[live-diff] failed to delete history snapshot', error)
+      await refreshHistory()
+    }
+  }, [refreshHistory])
+
   const toggleDarkMode = useCallback(() => {
     setDarkMode(current => !current)
   }, [])
@@ -466,6 +477,7 @@ export default function App() {
         historyItems={historyItems}
         isHistoryLoading={isHistoryLoading}
         onSelectHistory={handleSelectHistory}
+        onDeleteHistory={handleDeleteHistory}
         onClear={handleClear}
       />
 
