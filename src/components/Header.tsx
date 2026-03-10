@@ -31,57 +31,54 @@ function HistoryCard({
   onDelete: () => void
 }) {
   return (
-    <article className="rounded-3xl border border-surface-200/80 dark:border-surface-700/80 bg-surface-50/80 dark:bg-surface-900/60 shadow-sm overflow-hidden">
-      <div className="flex items-start justify-between gap-3 px-4 pt-4 pb-2 border-b border-surface-200/70 dark:border-surface-800/80">
-        <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary-600 dark:text-primary-400">
-            {savedAtLabel}
-          </p>
-          <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">Saved diff snapshot</p>
+    <article className="rounded-[28px] border border-surface-200/80 dark:border-surface-700/80 bg-surface-50/80 dark:bg-surface-900/60 shadow-sm p-3 md:p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="min-w-0 truncate whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.18em] text-primary-600 dark:text-primary-400">
+          {savedAtLabel}
+        </p>
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            onClick={onSelect}
+            className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-surface-900 text-white dark:bg-primary-500 dark:text-surface-950 text-[11px] font-semibold hover:bg-primary-600 dark:hover:bg-primary-400 transition-colors"
+          >
+            <span>Restore</span>
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12h16m0 0l-6-6m6 6l-6 6" />
+            </svg>
+          </button>
+
+          <button
+            onClick={onDelete}
+            className="inline-flex items-center justify-center w-8 h-8 rounded-xl border border-surface-200 dark:border-surface-700 text-surface-500 dark:text-surface-300 hover:text-red-500 hover:border-red-200 dark:hover:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            title="Delete this history entry"
+            aria-label="Delete this history entry"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
         </div>
       </div>
 
-      <div className="px-4 py-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="rounded-2xl border border-surface-200/80 dark:border-surface-800 bg-white/90 dark:bg-surface-950/60 px-3 py-2.5">
+      <div className="mt-3 grid grid-cols-2 gap-2.5">
+        <div className="rounded-2xl border border-surface-200/80 dark:border-surface-800 bg-white/90 dark:bg-surface-950/60 px-3 py-2">
           <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-surface-400 dark:text-surface-500">
             Original
           </div>
-          <p className="mt-1 text-[12px] leading-5 font-mono text-surface-700 dark:text-surface-200 min-h-[3.5rem] break-all">
+          <p className="mt-1 text-[11px] leading-4.5 font-mono text-surface-700 dark:text-surface-200 min-h-[3.25rem] break-all">
             {item.summaryOriginal}
           </p>
         </div>
 
-        <div className="rounded-2xl border border-surface-200/80 dark:border-surface-800 bg-white/90 dark:bg-surface-950/60 px-3 py-2.5">
+        <div className="rounded-2xl border border-surface-200/80 dark:border-surface-800 bg-white/90 dark:bg-surface-950/60 px-3 py-2">
           <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-surface-400 dark:text-surface-500">
             Modified
           </div>
-          <p className="mt-1 text-[12px] leading-5 font-mono text-surface-700 dark:text-surface-200 min-h-[3.5rem] break-all">
+          <p className="mt-1 text-[11px] leading-4.5 font-mono text-surface-700 dark:text-surface-200 min-h-[3.25rem] break-all">
             {item.summaryModified}
           </p>
         </div>
-      </div>
-
-      <div className="px-4 pb-4 grid grid-cols-2 gap-2">
-        <button
-          onClick={onSelect}
-          className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-2xl bg-surface-900 text-white dark:bg-primary-500 dark:text-surface-950 font-semibold hover:bg-primary-600 dark:hover:bg-primary-400 transition-colors"
-        >
-          <span>Restore</span>
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12h16m0 0l-6-6m6 6l-6 6" />
-          </svg>
-        </button>
-
-        <button
-          onClick={onDelete}
-          className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-2xl border border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-300 font-semibold hover:text-red-500 hover:border-red-200 dark:hover:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-          title="Delete this history entry"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-          <span>Delete</span>
-        </button>
       </div>
     </article>
   )
@@ -123,12 +120,7 @@ export function Header({
     if (!query) return historyItems
 
     return historyItems.filter((item) => {
-      const haystack = [
-        item.summaryOriginal,
-        item.summaryModified,
-        item.savedAt,
-        new Date(item.savedAt).toLocaleString(),
-      ].join(' ').toLowerCase()
+      const haystack = [item.summaryOriginal, item.summaryModified].join(' ').toLowerCase()
 
       return haystack.includes(query)
     })
@@ -165,6 +157,12 @@ export function Header({
     setIsHistoryModalOpen(false)
     setHistoryQuery('')
   }
+
+  const historySummaryLabel = isHistoryLoading
+    ? 'Loading...'
+    : historyQuery
+      ? `${filteredHistoryItems.length} result${filteredHistoryItems.length === 1 ? '' : 's'}`
+      : `${historyItems.length} saved`
 
   return (
     <>
@@ -308,19 +306,21 @@ export function Header({
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={openHistoryModal}
-            className="relative flex items-center justify-center sm:justify-start gap-2 px-3 py-2 rounded-xl bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 hover:shadow-lg transition-all duration-300 group overflow-visible w-11 sm:w-[118px]"
+            className="relative flex items-center justify-center sm:justify-start gap-2 px-3 py-1.5 rounded-xl hover:bg-white dark:hover:bg-surface-700 text-surface-600 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 shadow-sm hover:shadow-md transition-all duration-300 active:scale-95 group overflow-visible w-11 sm:w-[118px] border border-transparent hover:border-surface-200 dark:hover:border-surface-600"
             title="Open history manager"
           >
-            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <div className="p-1 rounded-lg bg-surface-200/50 dark:bg-surface-800 group-hover:bg-primary-500/10 transition-colors shrink-0">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
             <span className="hidden sm:block text-xs font-bold uppercase tracking-wider">History</span>
             {isHistoryLoading ? (
               <span className="absolute -top-1 -right-1">
                 <span className="diff-loading-spinner" aria-hidden="true" />
               </span>
             ) : historyItems.length > 0 ? (
-              <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-primary-500 text-white text-[10px] font-bold flex items-center justify-center shadow-sm shadow-primary-500/20">
+              <span className="absolute -top-1.5 -right-1 min-w-5 h-5 px-1 rounded-full bg-primary-500 text-white text-[10px] font-bold flex items-center justify-center shadow-sm shadow-primary-500/20">
                 {historyItems.length > 99 ? '99+' : historyItems.length}
               </span>
             ) : null}
@@ -369,14 +369,14 @@ export function Header({
           />
 
           <div className="relative w-full max-w-5xl mt-4 md:mt-10 rounded-[32px] border border-surface-200/70 dark:border-surface-700/70 bg-white/95 dark:bg-surface-900/95 shadow-2xl shadow-surface-950/20 dark:shadow-black/40 overflow-hidden">
-            <div className="px-5 md:px-6 py-5 border-b border-surface-200/70 dark:border-surface-800/80 flex flex-col md:flex-row md:items-center gap-4">
-              <div className="min-w-0">
-                <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-surface-400 dark:text-surface-500">
-                  History Manager
-                </div>
-                <h2 className="mt-2 text-xl md:text-2xl font-extrabold tracking-tight text-surface-900 dark:text-white">
-                  Restore, search, and prune saved diffs
+            <div className="px-5 md:px-6 py-4 border-b border-surface-200/70 dark:border-surface-800/80 flex flex-col md:flex-row md:items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <h2 className="text-xl md:text-2xl font-extrabold tracking-tight text-surface-900 dark:text-white">
+                  History
                 </h2>
+                <span className="inline-flex items-center rounded-full bg-surface-100 dark:bg-surface-800 px-2.5 py-1 text-xs font-semibold text-surface-500 dark:text-surface-300 whitespace-nowrap">
+                  {historySummaryLabel}
+                </span>
               </div>
 
               <div className="flex items-center gap-2 md:ml-auto">
@@ -386,13 +386,22 @@ export function Header({
                     type="text"
                     value={historyQuery}
                     onChange={(event) => setHistoryQuery(event.target.value)}
-                    placeholder="Search original, modified, or saved time"
+                    placeholder="Search original or modified"
                     className="w-full rounded-2xl border border-surface-200/80 dark:border-surface-700/80 bg-surface-50 dark:bg-surface-950 px-4 py-3 pl-11 text-sm text-surface-700 dark:text-surface-200 placeholder:text-surface-400 dark:placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400"
                   />
                   <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400 dark:text-surface-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m1.6-5.15a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </div>
+
+                {!isHistoryLoading && historyQuery && (
+                  <button
+                    onClick={() => setHistoryQuery('')}
+                    className="hidden sm:inline-flex items-center justify-center px-3 py-2 rounded-2xl text-sm font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
 
                 <button
                   onClick={closeHistoryModal}
@@ -406,25 +415,7 @@ export function Header({
               </div>
             </div>
 
-            <div className="px-5 md:px-6 py-4 border-b border-surface-200/70 dark:border-surface-800/80 flex items-center justify-between gap-3">
-              <div className="text-sm text-surface-500 dark:text-surface-400">
-                {isHistoryLoading
-                  ? 'Loading history…'
-                  : historyQuery
-                    ? `${filteredHistoryItems.length} result${filteredHistoryItems.length > 1 ? 's' : ''}`
-                    : `${historyItems.length} saved diff${historyItems.length > 1 ? 's' : ''}`}
-              </div>
-              {!isHistoryLoading && historyQuery && (
-                <button
-                  onClick={() => setHistoryQuery('')}
-                  className="text-sm font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
-                >
-                  Clear search
-                </button>
-              )}
-            </div>
-
-            <div className="max-h-[calc(100vh-220px)] overflow-auto px-5 md:px-6 py-5">
+            <div className="max-h-[calc(100vh-180px)] overflow-auto px-5 md:px-6 py-5">
               {isHistoryLoading ? (
                 <div className="min-h-[280px] flex flex-col items-center justify-center text-center">
                   <div className="diff-loading-spinner diff-loading-spinner--lg" aria-hidden="true" />
@@ -448,7 +439,7 @@ export function Header({
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 gap-3">
                   {filteredHistoryItems.map((item) => (
                     <HistoryCard
                       key={item.id}
