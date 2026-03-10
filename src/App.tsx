@@ -114,7 +114,12 @@ export default function App() {
   const isApplyingPersistedStateRef = useRef(false)
   const didMutateBeforeHydrationRef = useRef(false)
 
-  const applyWorkspace = useCallback((workspace: PersistedDiffState) => {
+  const applyWorkspace = useCallback((
+    workspace: PersistedDiffState,
+    options?: { syncLanguage?: boolean }
+  ) => {
+    const syncLanguage = options?.syncLanguage ?? true
+
     isApplyingPersistedStateRef.current = true
 
     try {
@@ -124,8 +129,10 @@ export default function App() {
       if (modifiedModel.getValue() !== workspace.modified) {
         modifiedModel.setValue(workspace.modified)
       }
-      setLanguage(workspace.language)
-      setDetectedLanguage(workspace.detectedLanguage)
+      if (syncLanguage) {
+        setLanguage(workspace.language)
+        setDetectedLanguage(workspace.detectedLanguage)
+      }
     } finally {
       isApplyingPersistedStateRef.current = false
     }
@@ -237,7 +244,7 @@ export default function App() {
       if (isCancelled) return
 
       if (persisted && !didMutateBeforeHydrationRef.current) {
-        applyWorkspace(persisted)
+        applyWorkspace(persisted, { syncLanguage: initialWorkspace == null })
       }
 
       setIsWorkspaceHydrated(true)

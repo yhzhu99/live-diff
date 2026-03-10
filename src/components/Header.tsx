@@ -32,32 +32,21 @@ function HistoryCard({
 }) {
   return (
     <article className="rounded-3xl border border-surface-200/80 dark:border-surface-700/80 bg-surface-50/80 dark:bg-surface-900/60 shadow-sm overflow-hidden">
-      <div className="flex items-start justify-between gap-3 px-4 pt-4 pb-3 border-b border-surface-200/70 dark:border-surface-800/80">
+      <div className="flex items-start justify-between gap-3 px-4 pt-4 pb-2 border-b border-surface-200/70 dark:border-surface-800/80">
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary-600 dark:text-primary-400">
             {savedAtLabel}
           </p>
-          <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">
-            Saved diff snapshot
-          </p>
+          <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">Saved diff snapshot</p>
         </div>
-        <button
-          onClick={onDelete}
-          className="shrink-0 flex items-center justify-center w-8 h-8 rounded-xl text-surface-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
-          title="Delete this history entry"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </button>
       </div>
 
-      <div className="px-4 py-4 space-y-3">
+      <div className="px-4 py-3 grid grid-cols-1 md:grid-cols-2 gap-3">
         <div className="rounded-2xl border border-surface-200/80 dark:border-surface-800 bg-white/90 dark:bg-surface-950/60 px-3 py-2.5">
           <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-surface-400 dark:text-surface-500">
             Original
           </div>
-          <p className="mt-1 text-[12px] leading-5 font-mono text-surface-700 dark:text-surface-200 max-h-10 overflow-hidden break-all">
+          <p className="mt-1 text-[12px] leading-5 font-mono text-surface-700 dark:text-surface-200 min-h-[3.5rem] break-all">
             {item.summaryOriginal}
           </p>
         </div>
@@ -66,21 +55,32 @@ function HistoryCard({
           <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-surface-400 dark:text-surface-500">
             Modified
           </div>
-          <p className="mt-1 text-[12px] leading-5 font-mono text-surface-700 dark:text-surface-200 max-h-10 overflow-hidden break-all">
+          <p className="mt-1 text-[12px] leading-5 font-mono text-surface-700 dark:text-surface-200 min-h-[3.5rem] break-all">
             {item.summaryModified}
           </p>
         </div>
       </div>
 
-      <div className="px-4 pb-4">
+      <div className="px-4 pb-4 grid grid-cols-2 gap-2">
         <button
           onClick={onSelect}
-          className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-2xl bg-surface-900 text-white dark:bg-primary-500 dark:text-surface-950 font-semibold hover:bg-primary-600 dark:hover:bg-primary-400 transition-colors"
+          className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-2xl bg-surface-900 text-white dark:bg-primary-500 dark:text-surface-950 font-semibold hover:bg-primary-600 dark:hover:bg-primary-400 transition-colors"
         >
           <span>Restore</span>
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12h16m0 0l-6-6m6 6l-6 6" />
           </svg>
+        </button>
+
+        <button
+          onClick={onDelete}
+          className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-2xl border border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-300 font-semibold hover:text-red-500 hover:border-red-200 dark:hover:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          title="Delete this history entry"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          <span>Delete</span>
         </button>
       </div>
     </article>
@@ -107,7 +107,6 @@ export function Header({
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
   const [historyQuery, setHistoryQuery] = useState('')
-  const languageDropdownRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   const allLanguages = [{ value: 'auto', label: 'Auto ✨' }, ...languages]
@@ -134,19 +133,6 @@ export function Header({
       return haystack.includes(query)
     })
   }, [historyItems, historyQuery])
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node
-
-      if (languageDropdownRef.current && !languageDropdownRef.current.contains(target)) {
-        setIsLanguageOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   useEffect(() => {
     if (!isHistoryModalOpen) return
@@ -201,7 +187,7 @@ export function Header({
         </div>
 
         <div className="flex items-center gap-2 bg-surface-100/50 dark:bg-surface-800/50 p-1 rounded-2xl border border-surface-200/50 dark:border-surface-700/50 shrink-0">
-          <div className="relative shrink-0" ref={languageDropdownRef}>
+          <div className="relative shrink-0">
             <button
               onClick={() => setIsLanguageOpen(current => !current)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-white dark:hover:bg-surface-700 shadow-sm hover:shadow-md transition-all duration-300 min-w-[120px] sm:min-w-[160px] text-left group border border-transparent hover:border-surface-200 dark:hover:border-surface-600"
@@ -322,7 +308,7 @@ export function Header({
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={openHistoryModal}
-            className="relative flex items-center justify-center sm:justify-start gap-2 px-3 py-2 rounded-xl bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 hover:shadow-lg transition-all duration-300 group overflow-hidden w-11 sm:w-[118px]"
+            className="relative flex items-center justify-center sm:justify-start gap-2 px-3 py-2 rounded-xl bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 hover:shadow-lg transition-all duration-300 group overflow-visible w-11 sm:w-[118px]"
             title="Open history manager"
           >
             <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -334,7 +320,7 @@ export function Header({
                 <span className="diff-loading-spinner" aria-hidden="true" />
               </span>
             ) : historyItems.length > 0 ? (
-              <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-primary-500 text-white text-[10px] font-bold flex items-center justify-center shadow-sm shadow-primary-500/20">
+              <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-primary-500 text-white text-[10px] font-bold flex items-center justify-center shadow-sm shadow-primary-500/20">
                 {historyItems.length > 99 ? '99+' : historyItems.length}
               </span>
             ) : null}
@@ -462,7 +448,7 @@ export function Header({
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   {filteredHistoryItems.map((item) => (
                     <HistoryCard
                       key={item.id}
